@@ -1,12 +1,20 @@
 const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 const fs = require('fs');
-const tesseract = require('tesseract.js');
-const sharp = require('sharp');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const RA = "111675629";
 const DIGITO = "8";
 const SENHA = "Novobene@123";
+
+// ==========================================
+// CONFIGURAÇÃO DO GEMINI (GRÁTIS)
+// ==========================================
+const GEMINI_API_KEY = 'KAKAAKKAKKAK'; // Pegar em: https://aistudio.google.com
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
+
 
 chromium.use(stealth);
 
@@ -16,91 +24,32 @@ function limparHTML(texto) {
 }
 
 // ==========================================
-// FUNÇÃO: Tratar imagem antes do OCR
+// FUNÇÃO: Resolver CAPTCHA via Gemini
 // ==========================================
-async function tratarImagem(imagemBase64) {
-  const buffer = Buffer.from(imagemBase64, 'base64');
-  
-  // Salvar imagem original
-  fs.writeFileSync('/tmp/captcha-original.png', buffer);
-  
-  // Aplicar filtros:
-  // 1. Converter para grayscale
-  // 2. Aumentar contraste
-  // 3. Binarizar (threshold)
-  // 4. Redimensionar (4x maior)
-  // 5. Remover ruído
-  await sharp(buffer)
-    .grayscale()
-    .normalize()
-    .threshold(128) // Binarizar: preto ou branco
-    .sharpen()
-    .resize({ width: 400, height: 100, fit: 'fill' })
-    .png()
-    .toFile('/tmp/captcha-tratado.png');
-  
-  return '/tmp/captcha-tratado.png';
-}
-
-// ==========================================
-// FUNÇÃO: Resolver CAPTCHA via OCR
-// ==========================================
-async function resolverCaptchaOCR(imagemBase64) {
+async function resolverCaptchaGemini(imagemBase64) {
   try {
-    // 1. Tratar imagem
-    const caminhoImagem = await tratarImagem(imagemBase64);
+    const prompt = 'Leia os caracteres desta imagem de CAPTCHA. Responda SOMENTE com os caracteres, sem espaços, sem explicações.';
     
-    // 2. OCR com múltiplas tentativas
-    const tentativas = [
-      { psm: 7, whitelist: 'abcdefghijklmnopqrstuvwxyz0123456789' },
-      { psm: 8, whitelist: 'abcdefghijklmnopqrstuvwxyz0123456789' },
-      { psm: 10, whitelist: 'abcdefghijklmnopqrstuvwxyz0123456789' },
-      { psm: 13, whitelist: 'abcdefghijklmnopqrstuvwxyz0123456789' }
-    ];
-    
-    for (const config of tentativas) {
-      const { data } = await tesseract.recognize(caminhoImagem, 'eng', {
-        tessedit_char_whitelist: config.whitelist,
-        tessedit_pageseg_mode: config.psm
-      });
-      
-      const resposta = data.text
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '') // Remove caracteres especiais
-        .trim();
-      
-      if (resposta.length >= 4 && resposta.length <= 6) {
-        console.log(`🤖 OCR leu: "${resposta}"`);
-        return resposta;
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          mimeType: 'image/png',
+          data: imagemBase64
+        }
       }
-    }
+    ]);
     
-    // Última tentativa: sem filtros
-    console.log('🔄 Tentando sem filtros...');
-    const { data } = await tesseract.recognize('/tmp/captcha-original.png', 'eng', {
-      tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyz0123456789'
-    });
-    
-    const resposta = data.text.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-    
-    if (resposta.length >= 4 && resposta.length <= 6) {
-      console.log(`🤖 OCR leu: "${resposta}"`);
-      return resposta;
-    }
-    
-    console.log('⚠️ OCR não conseguiu ler');
-    return '';
-    
+    const resposta = result.response.text().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+    console.log(`🤖 Gemini leu: "${resposta}"`);
+    return resposta;
   } catch (e) {
-    console.log('❌ Erro no OCR:', e.message);
+    console.log('❌ Erro no Gemini:', e.message);
     return '';
   }
 }
 
-// ==========================================
-// FUNÇÃO: Pegar token do CAPTCHA
-// ==========================================
-async function pegarTokenCaptcha(page) {
+async function pegarImagemCaptcha(page) {
   try {
     console.log('📥 Solicitando CAPTCHA...');
     
@@ -117,17 +66,18 @@ async function pegarTokenCaptcha(page) {
       return await response.json();
     });
     
-    const challengeId = challenge.challengeId;
-    const imagemBase64 = challenge.challenge.image;
-    
-    console.log(`🆔 Challenge ID: ${challengeId.substring(0, 20)}...`);
-    
-    const resposta = await resolverCaptchaOCR(imagemBase64);
-    
-    if (!resposta) return null;
-    
-    console.log('📤 Verificando...');
-    
+    return {
+      challengeId: challenge.challengeId,
+      imagemBase64: challenge.challenge.image
+    };
+  } catch (e) {
+    console.log('❌ Erro:', e.message);
+    return null;
+  }
+}
+
+async function verificarCaptcha(page, challengeId, resposta) {
+  try {
     const verify = await page.evaluate(async ({ challengeId, resposta }) => {
       const response = await fetch('https://edusp-api.ip.tv/captcha/verify', {
         method: 'POST',
@@ -148,36 +98,12 @@ async function pegarTokenCaptcha(page) {
       return await response.json();
     }, { challengeId, resposta });
     
-    if (verify.valid) {
-      console.log('✅ CAPTCHA resolvido!');
-      return verify.token;
-    } else {
-      console.log('❌ CAPTCHA incorreto!');
-      return null;
-    }
+    return verify;
   } catch (e) {
-    console.log('❌ Erro:', e.message);
     return null;
   }
 }
 
-// ==========================================
-// FUNÇÃO: Resolver CAPTCHA com retry
-// ==========================================
-async function resolverCaptchaCompleto(page) {
-  for (let i = 0; i < 3; i++) {
-    console.log(`\n🔄 Tentativa ${i + 1}/3`);
-    
-    const token = await pegarTokenCaptcha(page);
-    
-    if (token) return token;
-    
-    console.log('⏳ Aguardando 2s...');
-    await page.waitForTimeout(2000);
-  }
-  
-  return null;
-}
 
 // ==========================================
 // FUNÇÃO PRINCIPAL
@@ -275,31 +201,96 @@ async function resolverCaptchaCompleto(page) {
     
     await page.waitForTimeout(5000);
     
-    // Clicar no "Não sou um robô"
-    const botao = await page.locator('text="Não sou um robô"').first();
+const botao = await page.locator('text="Não sou um robô"').first();
     if (await botao.isVisible({ timeout: 3000 }).catch(() => false)) {
       console.log('🖱️ Clicando no "Não sou um robô"...');
       await botao.click();
       await page.waitForTimeout(3000);
     }
     
-    // Resolver CAPTCHA
+    // ==========================================
+    // FLUXO COMPLETO DO CAPTCHA
+    // ==========================================
     console.log('🔐 Resolvendo CAPTCHA...');
-    const tokenCaptcha = await resolverCaptchaCompleto(page);
     
-    if (!tokenCaptcha) {
-      console.log('   ❌ Falha no CAPTCHA, pulando...\n');
+    let sucesso = false;
+    
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      console.log(`\n🔄 Tentativa ${tentativa + 1}/3`);
+      
+      // 1. Pegar imagem do CAPTCHA
+      const captcha = await pegarImagemCaptcha(page);
+      if (!captcha) continue;
+      
+      // 2. Resolver com Gemini
+      const resposta = await resolverCaptchaGemini(captcha.imagemBase64);
+      if (!resposta) continue;
+      
+      // 3. DIGITAR NO INPUT
+      console.log(`⌨️ Digitando "${resposta}" no input...`);
+      
+      const inputCaptcha = await page.locator('input[type="text"]').last();
+      
+      if (await inputCaptcha.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await inputCaptcha.fill(resposta);
+        await page.waitForTimeout(1000);
+        console.log('✅ Código digitado!');
+      } else {
+        console.log('⚠️ Input não encontrado! Procurando...');
+        
+        // Tentar outros seletores
+        const inputs = await page.locator('input').all();
+        for (const input of inputs) {
+          const type = await input.getAttribute('type');
+          if (type === 'text' || type === 'password') {
+            await input.fill(resposta);
+            await page.waitForTimeout(1000);
+            console.log('✅ Código digitado!');
+            break;
+          }
+        }
+      }
+      
+      // 4. Clicar em Avançar
+      console.log('🖱️ Clicando em Avançar...');
+      
+      const avancarBtn = await page.locator('button:has-text("Confirmar")').first();
+      
+      if (await avancarBtn.isEnabled().catch(() => false)) {
+        await avancarBtn.click();
+        console.log('✅ Clicou em Avançar!');
+        await page.waitForTimeout(3000);
+      } else {
+        console.log('⏳ Botão Avançar desabilitado, aguardando...');
+        await page.waitForTimeout(5000);
+      }
+      
+      // 5. Clicar em Confirmar (se aparecer)
+      const confirmarBtn = await page.locator('button:has-text("Avançar")').first();
+      
+      if (await confirmarBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+        console.log('🖱️ Clicando em Confirmar...');
+        await confirmarBtn.click();
+        console.log('✅ Clicou em Confirmar!');
+        await page.waitForTimeout(5000);
+      }
+      
+      // 6. Verificar se carregou as questões
+      if (questoesAPI?.questions) {
+        sucesso = true;
+        break;
+      }
+      
+      console.log('⚠️ Ainda não carregou, tentando novamente...');
+      await page.waitForTimeout(2000);
+    }
+    
+    if (!sucesso) {
+      console.log('   ❌ Falha no CAPTCHA após 3 tentativas\n');
       continue;
     }
     
-    console.log('🔑 Avançando...');
-    
-    const avancarBtn = await page.locator('button:has-text("Avançar"), button:has-text("Continuar"), button:has-text("OK")').first();
-    if (await avancarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await avancarBtn.click();
-    }
-    
-    await page.waitForTimeout(15000);
+    await page.waitForTimeout(10000);
     
     if (!questoesAPI?.questions) {
       console.log('   ⚠️ Questões não carregaram\n');

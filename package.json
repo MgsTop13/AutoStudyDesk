@@ -14,9 +14,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "playwright": "^1.61.1",
     "playwright-extra": "^4.3.6",
     "prompt-sync": "^4.2.0",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sharp": "^0.35.4",
+    "tesseract.js": "^7.0.0"
   }
 }
