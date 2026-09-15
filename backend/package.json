@@ -1,0 +1,30 @@
+{
+  "name": "Tarefas-SP",
+  "version": "1.0",
+  "description": "Extrai dados e tarefas do Sala do Futuro",
+  "main": "a.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "capturar": "node capturar-apis.js",
+    "tarefas": "node extrair-tarefas.js",
+    "start": "node extrair-tarefas.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/genai": "^2.22.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.24.4",
+    "nodemon": "^3.1.14",
+    "playwright": "^1.61.1",
+    "playwright-extra": "^4.3.6",
+    "prompt-sync": "^4.2.0",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sharp": "^0.35.4",
+    "tesseract.js": "^7.0.0"
+  }
+}
