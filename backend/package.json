@@ -7,12 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "capturar": "node capturar-apis.js",
     "tarefas": "node extrair-tarefas.js",
-    "start": "node extrair-tarefas.js"
+    "start": "nodemon ./server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@google/genai": "^2.22.0",
     "cors": "^2.8.6",
