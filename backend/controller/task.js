@@ -64,14 +64,9 @@ endpoint.post("/tarefas/captcha", async (req, res) => {
     const resultado = await navegador.resolverCaptcha(resposta);
 
     if (!resultado.sucesso) {
-      const novoCaptcha = await navegador.pegarCaptcha();
       return res.json({
         sucesso: false,
-        captcha: {
-          imagem: novoCaptcha.imagem,
-          challengeId: novoCaptcha.challengeId
-        },
-        detalhe: novoCaptcha.detalhes
+        details: "Por favor faça o captcha novamente!"
       });
     }
 
