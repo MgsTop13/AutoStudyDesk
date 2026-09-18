@@ -20,16 +20,14 @@ endpoint.post("/login", async (req, res) => {
     await navegador.login(ra, digito, senha);
 
     // Busca tarefas
-    const tarefas = await navegador.buscarTarefas();
+    //const tarefas = await navegador.buscarTarefas();
 
     // ⚡ Retorna SÓ o essencial
     return res.json({
       sessionId,
       aluno: navegador.aluno,
       codigoAluno: navegador.codigoAluno,
-      pubTargets: navegador.pubTargets,
-      totalTarefas: tarefas.length,
-      tarefas
+      pubTargets: navegador.pubTargets
     });
 
   } catch (error) {

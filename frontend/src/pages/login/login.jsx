@@ -3,13 +3,16 @@ import api from "../../axios";
 import headerP from "../../components/header";
 import { useNavigate } from "react-router";
 import "./login.scss"
+import "../../../scss/global.scss"
+
+
 
 export default function Login() {
     const [ra, setRa] = useState();
     const [di, setDi] = useState();
     const [pass, setPass] = useState();
     const [isLoading, setIsLoading] = useState(false);
-
+    const navigate = useNavigate();
 
     async function EnviarDados() {
         try {
@@ -20,7 +23,13 @@ export default function Login() {
                 senha: pass
             });
 
-            console.log(response.data)
+            localStorage.setItem("session", response.data.sessionId)
+
+            if(response.data.sessionId){
+                navigate("/Home")
+            } else{
+                alert("Error no login!")
+            }
         } catch (error) {
             console.error(error)
         } finally {
