@@ -1,0 +1,112 @@
+.main-tasks {
+    $bg: #2e2e2e;
+    $bgCard: #1e1e1e;
+    $bgButton: #f08c00;
+    $bgAction: #1f8fe0;
+    $text1: #ffffff;
+    $text2: #343a40;
+
+    min-height: 150vh;
+    background-color: $bg;
+    color: $text1;
+
+    
+
+    .filtro {
+        margin: 24px;
+
+        select {
+            background-color: $bgCard;
+            color: $text1;
+
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+
+            font-size: 16px;
+            cursor: pointer;
+
+            &:focus {
+                outline: 2px solid $bgButton;
+                outline-offset: 1px;
+            }
+        }
+    }
+
+    .all {
+        width: 90%;
+        background-color: $bgCard;
+
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        align-content: start;
+
+        border-radius: 20px;
+        padding: 3%;
+        margin: 5%;
+
+        .card {
+            background-color: $bgButton;
+            color: $text2;
+
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            border-radius: 16px;
+            padding: 16px;
+
+            .info {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+
+                h1 {
+                    font-size: 18px;
+                    font-weight: 600;
+                }
+
+                h3 {
+                    font-size: 15px;
+                    font-weight: 500;
+                }
+
+                p {
+                    font-size: 13px;
+                    line-height: 1.4;
+                }
+            }
+
+            button {
+                width: 60%;
+                align-self: center;
+                margin-top: auto;
+
+                height: 36px;
+                border: none;
+                border-radius: 8px;
+
+                background-color: $bgAction;
+                color: $text1;
+
+                font-size: 15px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: filter 0.15s ease;
+
+                &:hover {
+                    filter: brightness(1.08);
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 6% 5%;
+
+        .all {
+            grid-template-columns: 1fr;
+        }
+    }
+}

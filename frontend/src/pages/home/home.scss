@@ -1,0 +1,114 @@
+.main-home {
+    $bg: #2e2e2e;
+    $bgCard: #1e1e1e;
+    $bgButton: #f08c00;
+    $text1: #ffffff;
+    $text2: #343a40;
+
+    min-height: 100vh;
+    background-color: $bg;
+    color: $text1;
+
+    h1 {
+        text-align: start;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        padding: 2%;
+    }
+
+    .all {
+        width: 95%;
+        background-color: $bgCard;
+
+        margin: 3%;
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+
+        border-radius: 20px;
+        padding: 3%;
+
+        .info {
+            width: 55%;
+
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            align-content: start;
+
+            .link {
+                color: $text2;
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+
+                h3 {
+                    background-color: $bgButton;
+                    color: $text2;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+
+                    min-height: 60px;
+                    padding: 12px;
+
+                    border-radius: 12px;
+                    font-size: 16px;
+                    font-weight: 600;
+
+                    cursor: pointer;
+                    transition: filter 0.15s ease;
+
+
+                    &:hover {
+                        filter: brightness(1.08);
+                    }
+                }
+            }
+        }
+
+        .boletim {
+            width: 45%;
+            min-height: 280px;
+
+            background-color: $bgButton;
+            color: $text2;
+
+            border-radius: 16px;
+            padding: 16px;
+
+            h2 {
+                font-size: 18px;
+                font-weight: 600;
+            }
+        }
+    }
+
+    .plataformas {
+        margin-top: 24px;
+        font-size: 18px;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        padding: 6% 5%;
+
+        .all {
+            flex-direction: column;
+
+            .info,
+            .boletim {
+                width: 100%;
+            }
+
+            .boletim {
+                min-height: 240px;
+            }
+        }
+    }
+}
