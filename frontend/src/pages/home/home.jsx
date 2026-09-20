@@ -8,7 +8,7 @@ import "./home.scss";
 export default function Home() {
     const [name, setName] = useState("");
     const sectionId = localStorage.getItem("session");
-    const [tasks, setTasks] = useState([{}]);
+    const [tasks, setTasks] = useState(0);
     const navigate = useNavigate();
 
     async function getActivy() {
@@ -19,7 +19,7 @@ export default function Home() {
                 return navigate("/")
             };
             const tasks = await api.get(`/tarefas/${sectionId}`);
-            setTasks(tasks.data.tarefas);
+            setTasks(tasks.data.tarefas.length);
         } catch (error) {
             console.error(error.message)
         }

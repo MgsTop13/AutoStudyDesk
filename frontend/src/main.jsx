@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import Rota from './routes.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  //<StrictMode>
     <Rota />
-  </StrictMode>,
+  //</StrictMode>,
 )

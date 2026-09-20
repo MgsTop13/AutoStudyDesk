@@ -65,12 +65,12 @@ export default function Tasks() {
                     ))}
 
                 {modal && selectedTask && (
-    <Captcha
-        task={selectedTask}
-        sessionId={sectionId}   // ⚠️ sem isso, o backend não sabe qual navegador usar
-        onClose={closeModal}
-    />
-)}
+                    <Captcha
+                        task={selectedTask}
+                        sessionId={sectionId}   // ⚠️ sem isso, o backend não sabe qual navegador usar
+                        onClose={closeModal}
+                    />
+                )}
             </div>
         </main>
     );

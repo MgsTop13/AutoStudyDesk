@@ -1,3 +1,4 @@
+import { TuningJobState } from "@google/genai";
 import { chromium } from "playwright-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
 
@@ -91,7 +92,7 @@ class Navegador {
     if (body.sedCookies) this.sedCookies = body.sedCookies;
     if (body.codigoAluno) this.codigoAluno = body.codigoAluno;
     if (body.pubTargets) this.pubTargets = body.pubTargets;
-
+    console.log(body)
     // Dados do aluno (formato pode variar)
     this.aluno = body.aluno || {
       nome: body.nome,
@@ -145,107 +146,97 @@ class Navegador {
   }
 
   async abrirTarefa(tarefaId) {
-    this.questoesAPI = null;
-    this.captchaAtual = null;
+  this.questoesAPI = null;
+  this.captchaAtual = null;
 
-    // Cria promessa que será resolvida quando as questões vierem
-    const promessaQuestoes = new Promise((resolve) => {
-      this._promessaQuestoes = resolve;
-    });
+  const promessaQuestoes = new Promise((resolve) => {
+    this._promessaQuestoes = resolve;
+  });
 
-    await this.page.goto(
-      `https://saladofuturo.educacao.sp.gov.br/atividade/${tarefaId}?enable_captcha=true`,
-      { waitUntil: "domcontentloaded", timeout: 30000 }
-    );
+  await this.page.goto(
+    `https://saladofuturo.educacao.sp.gov.br/atividade/${tarefaId}?enable_captcha=true`,
+    { waitUntil: "domcontentloaded", timeout: 30000 }
+  );
 
-    // ✅ Espera a página carregar e o botão aparecer
-    await this.page.waitForTimeout(3000);
+  await this.page.waitForTimeout(3000);
 
-    // ✅ Clica em "Não sou um robô" e ESPERA ele sumir
-    const botao = await this.page.locator('text="Não sou um robô"').first();
-    if (await botao.isVisible({ timeout: 5000 }).catch(() => false)) {
-      console.log('🖱️ Clicando em "Não sou um robô"...');
-      await botao.click();
-
-      // ✅ Espera o input do CAPTCHA aparecer (ou o botão sumir)
-      await this.page.waitForSelector('input[type="text"]', { timeout: 10000 }).catch(() => { });
-      await this.page.waitForTimeout(2000);
-    }
-
-    // ✅ Agora sim, pega o CAPTCHA específico da atividade
-    await this.pegarCaptcha();
+  const botao = this.page.locator('text="Não sou um robô"').first();
+  if (await botao.isVisible({ timeout: 5000 }).catch(() => false)) {
+    console.log('🖱️ Clicando em "Não sou um robô"...');
+    await botao.click();
   }
+
+  // ⏳ espera o <img> com src blob aparecer E carregar
+  await this.page.waitForFunction(() => {
+    const img = document.querySelector('img.MuiCardMedia-img');
+    return img && img.src.startsWith('blob:') && img.complete && img.naturalWidth > 0;
+  }, { timeout: 20000 });
+
+  // 📥 Lê o blob e converte pra data URL, tudo dentro do browser
+  const imagemBase64 = await this.page.evaluate(async () => {
+    const img = document.querySelector('img.MuiCardMedia-img');
+    if (!img) return null;
+
+    const resp = await fetch(img.src);
+    const blob = await resp.blob();
+
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result); // "data:image/png;base64,..."
+      reader.readAsDataURL(blob);
+    });
+  });
+
+  if (!imagemBase64) {
+    throw new Error("Captcha não encontrado na tela");
+  }
+
+  this.captchaAtual = { imagem: imagemBase64 };
+
+  return this.captchaAtual;
+}
 
 
   async pegarCaptcha() {
-    // ✅ Pega o CAPTCHA que já está na tela (não gera um novo!)
-    const challenge = await this.page.evaluate(async () => {
-      const response = await fetch("https://edusp-api.ip.tv/captcha/challenge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Origin": "https://saladofuturo.educacao.sp.gov.br",
-          "Referer": "https://saladofuturo.educacao.sp.gov.br/"
-        },
-        body: JSON.stringify({ type: "image", realm: "edusp" })
-      });
-      return await response.json();
-    });
-
-    this.captchaAtual = {
-      challengeId: challenge.challengeId,
-      imagem: challenge.challenge.image
-    };
-
-    return this.captchaAtual;
+  // Só devolve o captcha que JÁ foi lido da tela em abrirTarefa().
+  // NÃO chama API. NÃO gera novo. NÃO sobrescreve nada.
+  if (!this.captchaAtual) {
+    throw new Error("Nenhum captcha carregado. Chame abrirTarefa() antes.");
   }
+  return this.captchaAtual;
+}
 
   async resolverCaptcha(resposta) {
-    if (!this.captchaAtual) {
-      return { sucesso: false, motivo: "sem_captcha" };
-    }
+  if (!this.captchaAtual) return { sucesso: false, motivo: "sem_captcha" };
 
-    // ✅ Digita no input (o último input de texto da tela)
-    const inputCaptcha = await this.page.locator('input[type="text"]').last();
-    if (await inputCaptcha.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await inputCaptcha.fill(resposta);
-      await this.page.waitForTimeout(500);
-    }
-
-    // ✅ Clica em "Avançar"
-    const avancarBtn = await this.page.locator('button:has-text("Avançar")').first();
-    if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
-      await avancarBtn.click();
-      await this.page.waitForTimeout(2000);
-    }
-
-    // ✅ Clica em "Confirmar" se aparecer
-    const confirmarBtn = await this.page.locator('button:has-text("Confirmar")').first();
-    if (await confirmarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await confirmarBtn.click();
-      await this.page.waitForTimeout(2000);
-    }
-
-    const avancarBtn2 = await this.page.locator('button:has-text("Avançar")').first();
-    if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
-      await avancarBtn.click();
-      await this.page.waitForTimeout(2000);
-    }
-
-    // Espera a API de questões chegar
-    const promessaQuestoes = new Promise((resolve) => {
-      this._promessaQuestoes = resolve;
-    });
-    await Promise.race([
-      promessaQuestoes,
-      new Promise(r => setTimeout(r, 15000))
-    ]);
-
-    return {
-      sucesso: !!this.questoesAPI?.questions,
-      questoes: this.questoesAPI
-    };
+  const inputCaptcha = this.page.locator('input[type="text"]').last();
+  if (await inputCaptcha.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await inputCaptcha.fill(resposta);
+    await this.page.waitForTimeout(500);
   }
+
+  const avancarBtn = this.page.locator('button:has-text("Avançar")').first();
+  if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
+    await avancarBtn.click();
+    await this.page.waitForTimeout(2000);
+  }
+
+  const confirmarBtn = this.page.locator('button:has-text("Confirmar")').first();
+  if (await confirmarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await confirmarBtn.click();
+    await this.page.waitForTimeout(2000);
+  }
+
+  const promessaQuestoes = new Promise((resolve) => {
+    this._promessaQuestoes = resolve;
+  });
+  await Promise.race([promessaQuestoes, new Promise(r => setTimeout(r, 15000))]);
+
+  return {
+    sucesso: !!this.questoesAPI?.questions,
+    questoes: this.questoesAPI
+  };
+}
 
 
   async fechar() {

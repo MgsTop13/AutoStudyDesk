@@ -9,30 +9,32 @@ export default function Captcha({ task, onClose, sessionId }) {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
 
-  useEffect(() => {
-    async function carregarCaptcha() {
-        try {
-            setCarregando(true);
-            setErro("");
+    useEffect(() => {
+        async function carregarCaptcha() {
+            try {
+                setCarregando(true);
+                setErro("");
 
-            const response = await api.post("/tarefas/abrir", {
-                sessionId,
-                tarefaId: task.id
-            });
+                const response = await api.post("/tarefas/abrir", {
+                    sessionId,
+                    tarefaId: task.id
+                });
 
-            console.log("📦 Resposta recebida:", response.data.captcha.challengeId);
+                console.log("📦 Resposta recebida:", response.data.captcha.challengeId);
+                const raw = response.data.captcha.imagem;
+                const src = raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
+                setImage(src);
 
-            setImage(response.data.captcha.imagem);
-        } catch (error) {
-            console.error(error);
-            setErro("Não foi possível carregar o captcha");
-        } finally {
-            setCarregando(false);
+            } catch (error) {
+                console.error(error);
+                setErro("Não foi possível carregar o captcha");
+            } finally {
+                setCarregando(false);
+            }
         }
-    }
 
-    if (task?.id && sessionId) carregarCaptcha();
-}, [task?.id, sessionId]);
+        if (task?.id && sessionId) carregarCaptcha();
+    }, [task?.id, sessionId]);
 
     async function enviarCaptcha() {
         if (!captchaT.trim()) return;
@@ -51,6 +53,11 @@ export default function Captcha({ task, onClose, sessionId }) {
             }
 
             console.log("✅ Questões liberadas:", response.data.questoes);
+            const responseGemini = await api.post("/EnviarAtividade", {
+                page: response.data.questoes,
+                sessionId: sessionId
+            });
+            console.log(responseGemini)
             onClose();
         } catch (error) {
             console.error(error);
@@ -63,6 +70,7 @@ export default function Captcha({ task, onClose, sessionId }) {
             <h2 onClick={onClose}>Fechar</h2>
 
             <div className="info">
+
                 {carregando && <p>Carregando captcha...</p>}
 
                 {!carregando && image && (

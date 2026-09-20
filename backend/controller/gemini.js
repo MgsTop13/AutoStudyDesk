@@ -26,18 +26,18 @@ FORMATO:
 }`;
 
 export function limparHTML(texto) {
-  if (!texto) return '';
-  if (typeof texto !== 'string') texto = String(texto);
-  return texto
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
+    if (!texto) return '';
+    if (typeof texto !== 'string') texto = String(texto);
+    return texto
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 
@@ -96,53 +96,54 @@ export function limparQuestoesParaIA(questoesAPI) {
 }
 
 endpoint.post("/EnviarAtividade", async (req, res) => {
-    const { page, sessionId } = req.body;
+    const { page /*sessionId*/ } = req.body;
 
     try {
         //const navegador = sessaoManager.get(sessionId);
         const tokenGemini = process.env.gemini;
-        
+        /*
         if (!sessionId)
             return res.status(400).json({ details: "Faça login novamente!" });
+        */
 
         const entregarIA = limparQuestoesParaIA(page.questoes);
-        
-        const ai = new GoogleGenAI({apiKey: tokenGemini});
+
+        const ai = new GoogleGenAI({ apiKey: tokenGemini });
 
         const interaction = await ai.interactions.create({
-      model: "gemini-3.6-flash",
-      input: `${prompt}\n\nQuestões:\n${JSON.stringify(entregarIA, null, 2)}`
-    });
+            model: "gemini-3.6-flash",
+            input: `${prompt}\n\nQuestões:\n${JSON.stringify(entregarIA, null, 2)}`
+        });
 
-    res.status(200).json({
-      sucess: true,
-      IA: interaction.output_text  // ✅ output_text
-    });
+        res.status(200).json({
+            sucess: true,
+            IA: interaction.output_text  // ✅ output_text
+        });
 
 
 
     } catch (error) {
         console.error('🔴 ERRO COMPLETO:');
-  console.error('   Name:', error.name);
-  console.error('   Message:', error.message);
-  console.error('   Status:', error.status);
-  console.error('   Stack:', error.stack);
+        console.error('   Name:', error.name);
+        console.error('   Message:', error.message);
+        console.error('   Status:', error.status);
+        console.error('   Stack:', error.stack);
 
-  // Tenta pegar o body da resposta
-  if (error.response) {
-    console.error('   Body:', JSON.stringify(error.response, null, 2));
-  }
+        // Tenta pegar o body da resposta
+        if (error.response) {
+            console.error('   Body:', JSON.stringify(error.response, null, 2));
+        }
 
-  res.status(500).json({
-    sucess: false,
-    error: error.message,
-    // ✅ Debug extra
-    debug: {
-      name: error.name,
-      status: error.status,
-      response: error.response || 'sem response'
-    }
-  });
+        res.status(500).json({
+            sucess: false,
+            error: error.message,
+            // ✅ Debug extra
+            debug: {
+                name: error.name,
+                status: error.status,
+                response: error.response || 'sem response'
+            }
+        });
 
     }
 })
