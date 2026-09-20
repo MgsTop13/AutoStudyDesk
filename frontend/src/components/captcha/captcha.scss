@@ -1,0 +1,75 @@
+$bg: #2e2e2e;
+$bgCard: #1e1e1ef8;
+$bgButton: #f08c00;
+$bgAction: #1f8fe0;
+$text1: #ffffff;
+
+.captcha {
+
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    padding: 3%;
+    width: 70%;
+    height: 50%;
+    border-radius: 15px;
+
+    background-color: $bgCard;
+
+    .info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10%;
+        height: 95%;
+
+        h2 {
+            font-size: 1.2rem;
+        }
+
+        input {
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            background-color: $bg;
+            color: $text1;
+            padding: 0 12px;
+            font-size: 14px;
+            width: 80%;
+
+            &::placeholder {
+                color: rgba($text1, 0.5);
+            }
+
+            &:focus {
+                outline: 2px solid $bgButton;
+                outline-offset: 1px;
+            }
+        }
+
+        button {
+            width: 60%;
+            align-self: center;
+            margin-top: auto;
+
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+
+            background-color: $bgAction;
+            color: $text1;
+
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: filter 0.15s ease;
+
+            &:hover {
+                filter: brightness(1.08);
+            }
+        }
+    }
+}

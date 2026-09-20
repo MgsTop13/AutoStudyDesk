@@ -46,6 +46,7 @@
         padding: 3%;
         margin: 5%;
 
+        position: relative;
         .card {
             background-color: $bgButton;
             color: $text2;
@@ -56,7 +57,7 @@
 
             border-radius: 16px;
             padding: 16px;
-
+            
             .info {
                 display: flex;
                 flex-direction: column;
