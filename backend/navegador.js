@@ -1,4 +1,3 @@
-import { TuningJobState } from "@google/genai";
 import { chromium } from "playwright-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
 
@@ -13,7 +12,6 @@ class Navegador {
     this.questoesAPI = null;
     this.captchaAtual = null;
 
-    // Dados de sessão (preenchidos no login)
     this.authToken = null;
     this.sedToken = null;
     this.pubTargets = [];
@@ -22,7 +20,6 @@ class Navegador {
     this.sedCookies = "";
     this.userAgent = "";
 
-    // Promises para sincronizar
     this._promessaLogin = null;
     this._promessaTarefas = null;
     this._promessaQuestoes = null;
@@ -38,7 +35,6 @@ class Navegador {
   }
 
   _setupListeners() {
-    // Bloquear rastreadores
     this.page.route("**/*", (route) => {
       const url = route.request().url();
       if (url.includes("dynatrace") || url.includes("google-analytics") || url.includes("clarity")) {
@@ -48,11 +44,9 @@ class Navegador {
       }
     });
 
-    // Capturar respostas das APIs
     this.page.on("response", async (response) => {
       const url = response.url();
 
-      // Login completo (pega token, sedToken, pubTargets)
       if (url.includes("LoginCompletoToken") || url.includes("/login")) {
         try {
           const body = await response.json();
@@ -61,7 +55,6 @@ class Navegador {
         } catch (e) { }
       }
 
-      // Lista de tarefas
       if (url.includes("/tms/task/todo") && !url.includes("/count")) {
         try {
           const body = await response.json();
@@ -72,7 +65,6 @@ class Navegador {
         } catch (e) { }
       }
 
-      // Questões da tarefa
       if (url.includes("/tms/task/") && !url.includes("/todo") && !url.includes("/count")) {
         try {
           const body = await response.json();
@@ -86,14 +78,12 @@ class Navegador {
   }
 
   _processarLogin(body) {
-    // Extrai dados do login
     if (body.token) this.authToken = body.token;
     if (body.sedToken) this.sedToken = body.sedToken;
     if (body.sedCookies) this.sedCookies = body.sedCookies;
     if (body.codigoAluno) this.codigoAluno = body.codigoAluno;
     if (body.pubTargets) this.pubTargets = body.pubTargets;
-    console.log(body)
-    // Dados do aluno (formato pode variar)
+
     this.aluno = body.aluno || {
       nome: body.nome,
       ra: body.ra,
@@ -101,7 +91,6 @@ class Navegador {
       escola: body.escola
     };
   }
-
 
   async login(ra, digito, senha) {
     await this.page.goto("https://saladofuturo.educacao.sp.gov.br/login-alunos", {
@@ -126,7 +115,6 @@ class Navegador {
   }
 
   async buscarTarefas() {
-    // Cria promessa que será resolvida quando a API de tarefas responder
     const promessaTarefas = new Promise((resolve) => {
       this._promessaTarefas = resolve;
     });
@@ -136,7 +124,6 @@ class Navegador {
       timeout: 50000
     });
 
-    // Espera a API responder OU timeout
     await Promise.race([
       promessaTarefas,
       new Promise(r => setTimeout(r, 10000))
@@ -146,98 +133,228 @@ class Navegador {
   }
 
   async abrirTarefa(tarefaId) {
-  this.questoesAPI = null;
-  this.captchaAtual = null;
+    this.questoesAPI = null;
+    this.captchaAtual = null;
 
-  const promessaQuestoes = new Promise((resolve) => {
-    this._promessaQuestoes = resolve;
-  });
+    await this.page.goto(
+      `https://saladofuturo.educacao.sp.gov.br/atividade/${tarefaId}?enable_captcha=true`,
+      { waitUntil: "domcontentloaded", timeout: 30000 }
+    );
 
-  await this.page.goto(
-    `https://saladofuturo.educacao.sp.gov.br/atividade/${tarefaId}?enable_captcha=true`,
-    { waitUntil: "domcontentloaded", timeout: 30000 }
-  );
+    await this.page.waitForTimeout(3000);
 
-  await this.page.waitForTimeout(3000);
+    const botao = this.page.locator('text="Não sou um robô"').first();
+    if (await botao.isVisible({ timeout: 5000 }).catch(() => false)) {
+      console.log('🖱️ Clicando em "Não sou um robô"...');
+      await botao.click();
+    }
 
-  const botao = this.page.locator('text="Não sou um robô"').first();
-  if (await botao.isVisible({ timeout: 5000 }).catch(() => false)) {
-    console.log('🖱️ Clicando em "Não sou um robô"...');
-    await botao.click();
-  }
+    // Espera o <img> com src blob carregar
+    await this.page.waitForFunction(() => {
+      const img = document.querySelector('img.MuiCardMedia-img');
+      return img && img.src.startsWith('blob:') && img.complete && img.naturalWidth > 0;
+    }, { timeout: 20000 });
 
-  // ⏳ espera o <img> com src blob aparecer E carregar
-  await this.page.waitForFunction(() => {
-    const img = document.querySelector('img.MuiCardMedia-img');
-    return img && img.src.startsWith('blob:') && img.complete && img.naturalWidth > 0;
-  }, { timeout: 20000 });
+    // Lê o blob como base64
+    const imagemBase64 = await this.page.evaluate(async () => {
+      const img = document.querySelector('img.MuiCardMedia-img');
+      if (!img) return null;
 
-  // 📥 Lê o blob e converte pra data URL, tudo dentro do browser
-  const imagemBase64 = await this.page.evaluate(async () => {
-    const img = document.querySelector('img.MuiCardMedia-img');
-    if (!img) return null;
+      const resp = await fetch(img.src);
+      const blob = await resp.blob();
 
-    const resp = await fetch(img.src);
-    const blob = await resp.blob();
-
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result); // "data:image/png;base64,..."
-      reader.readAsDataURL(blob);
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
     });
-  });
 
-  if (!imagemBase64) {
-    throw new Error("Captcha não encontrado na tela");
+    if (!imagemBase64) throw new Error("Captcha não encontrado na tela");
+
+    this.captchaAtual = { imagem: imagemBase64 };
+    return this.captchaAtual;
   }
-
-  this.captchaAtual = { imagem: imagemBase64 };
-
-  return this.captchaAtual;
-}
-
 
   async pegarCaptcha() {
-  // Só devolve o captcha que JÁ foi lido da tela em abrirTarefa().
-  // NÃO chama API. NÃO gera novo. NÃO sobrescreve nada.
-  if (!this.captchaAtual) {
-    throw new Error("Nenhum captcha carregado. Chame abrirTarefa() antes.");
+    if (!this.captchaAtual) {
+      throw new Error("Nenhum captcha carregado. Chame abrirTarefa() antes.");
+    }
+    return this.captchaAtual;
   }
-  return this.captchaAtual;
-}
 
   async resolverCaptcha(resposta) {
-  if (!this.captchaAtual) return { sucesso: false, motivo: "sem_captcha" };
+    if (!this.captchaAtual) return { sucesso: false, motivo: "sem_captcha" };
 
-  const inputCaptcha = this.page.locator('input[type="text"]').last();
-  if (await inputCaptcha.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await inputCaptcha.fill(resposta);
-    await this.page.waitForTimeout(500);
+    const inputCaptcha = this.page.locator('input[type="text"]').last();
+    if (await inputCaptcha.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await inputCaptcha.fill(resposta);
+      await this.page.waitForTimeout(500);
+    }
+
+    const avancarBtn = this.page.locator('button:has-text("Avançar")').first();
+    if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
+      await avancarBtn.click();
+      await this.page.waitForTimeout(2000);
+    }
+
+    const confirmarBtn = this.page.locator('button:has-text("Confirmar")').first();
+    if (await confirmarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await confirmarBtn.click();
+      await this.page.waitForTimeout(2000);
+    }
+
+    const promessaQuestoes = new Promise((resolve) => {
+      this._promessaQuestoes = resolve;
+    });
+    await Promise.race([promessaQuestoes, new Promise(r => setTimeout(r, 15000))]);
+
+    return {
+      sucesso: !!this.questoesAPI?.questions,
+      questoes: this.questoesAPI
+    };
   }
 
-  const avancarBtn = this.page.locator('button:has-text("Avançar")').first();
-  if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
-    await avancarBtn.click();
-    await this.page.waitForTimeout(2000);
+  // ==========================================
+  // PREENCHER RESPOSTAS
+  // ==========================================
+  async preencherRespostas(respostas) {
+    const resultados = [];
+
+    for (const r of respostas) {
+      const questao = this.questoesAPI.questions.find(q => q.id === r.id);
+      if (!questao) {
+        resultados.push({ id: r.id, ok: false, motivo: "questao_nao_encontrada" });
+        continue;
+      }
+
+      try {
+        // Container da questão
+        const container = this.page.locator(`[chave*="${r.id}"]`).first();
+
+        // ==========================================
+        // SINGLE
+        // ==========================================
+        if (r.tipo === 'single') {
+          const idx = r.valor.charCodeAt(0) - 65;
+          const radio = container.locator(`input[type="radio"][value="${idx}"]`);
+          
+          if (await radio.count() > 0) {
+            await radio.first().check({ force: true });
+            await this.page.waitForTimeout(200);
+            resultados.push({ id: r.id, ok: true });
+            console.log(`✅ Q${questao.order} (single) → ${r.valor}`);
+          } else {
+            resultados.push({ id: r.id, ok: false, motivo: `radio_${idx}_nao_encontrado` });
+            console.log(`❌ Q${questao.order}: radio não encontrado`);
+          }
+        }
+
+        // ==========================================
+        // MULTI
+        // ==========================================
+        else if (r.tipo === 'multi') {
+          const letras = Array.isArray(r.valor) ? r.valor : [r.valor];
+          
+          for (const letra of letras) {
+            const idx = letra.charCodeAt(0) - 65;
+            const radio = container.locator(`input[type="radio"][value="${idx}"], input[type="checkbox"][value="${idx}"]`);
+            
+            if (await radio.count() > 0) {
+              await radio.first().check({ force: true });
+              await this.page.waitForTimeout(200);
+            }
+          }
+          resultados.push({ id: r.id, ok: true });
+          console.log(`✅ Q${questao.order} (multi) → ${letras.join(',')}`);
+        }
+
+        // ==========================================
+        // TRUE-FALSE
+        // ==========================================
+        else if (r.tipo === 'true-false') {
+          const valores = r.valor;
+          const grupos = await container.locator('[role="radiogroup"]').all();
+
+          for (let i = 0; i < Math.min(grupos.length, valores.length); i++) {
+            const valor = valores[i]; // true ou false
+            const radio = grupos[i].locator(`input[type="radio"][value="${valor}"]`);
+            
+            if (await radio.count() > 0) {
+              await radio.first().check({ force: true });
+              await this.page.waitForTimeout(150);
+            }
+          }
+          resultados.push({ id: r.id, ok: true });
+          console.log(`✅ Q${questao.order} (true-false) → ${valores.join(',')}`);
+        }
+
+        // ==========================================
+        // TEXT_AI
+        // ==========================================
+        else if (r.tipo === 'text_ai') {
+          const textarea = container.locator('textarea[placeholder="Responder"]').first();
+
+          if (await textarea.count() > 0) {
+            await textarea.fill(r.valor);
+            resultados.push({ id: r.id, ok: true });
+            console.log(`✅ Q${questao.order} (text_ai) → ${r.valor.substring(0, 50)}...`);
+          } else {
+            resultados.push({ id: r.id, ok: false, motivo: "textarea_nao_encontrado" });
+          }
+        }
+
+        // ==========================================
+        // FILL-WORDS (MUI Select)
+        // ==========================================
+        else if (r.tipo === 'fill-words') {
+          const palavras = r.valor;
+          const combos = await container.locator('[role="combobox"]').all();
+
+          console.log(`📝 Q${questao.order} fill-words: ${combos.length} lacunas, ${palavras.length} palavras`);
+
+          for (let i = 0; i < Math.min(combos.length, palavras.length); i++) {
+            const palavra = palavras[i];
+
+            // 1. Clica no combobox
+            await combos[i].click();
+            await this.page.waitForTimeout(500);
+
+            // 2. Clica na opção pelo data-value
+            const opcao = this.page.locator(`li[role="option"][data-value="${palavra}"]`).first();
+            
+            if (await opcao.count() > 0) {
+              await opcao.click();
+              await this.page.waitForTimeout(300);
+            } else {
+              console.log(`   ⚠️ Opção "${palavra}" não encontrada, tentando por texto`);
+              const opcaoTexto = this.page.locator(`li[role="option"]:has-text("${palavra}")`).first();
+              if (await opcaoTexto.count() > 0) {
+                await opcaoTexto.click();
+                await this.page.waitForTimeout(300);
+              }
+            }
+          }
+          resultados.push({ id: r.id, ok: true });
+          console.log(`✅ Q${questao.order} (fill-words) → ${palavras.join(', ')}`);
+        }
+
+        // ==========================================
+        // ORDER-SENTENCES
+        // ==========================================
+        else if (r.tipo === 'order-sentences') {
+          console.log(`⚠️ Q${questao.order}: order-sentences ainda não implementado`);
+          resultados.push({ id: r.id, ok: false, motivo: "nao_implementado" });
+        }
+
+      } catch (e) {
+        console.log(`❌ Erro na Q${questao.order}:`, e.message);
+        resultados.push({ id: r.id, ok: false, motivo: e.message });
+      }
+    }
+
+    return resultados;
   }
-
-  const confirmarBtn = this.page.locator('button:has-text("Confirmar")').first();
-  if (await confirmarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await confirmarBtn.click();
-    await this.page.waitForTimeout(2000);
-  }
-
-  const promessaQuestoes = new Promise((resolve) => {
-    this._promessaQuestoes = resolve;
-  });
-  await Promise.race([promessaQuestoes, new Promise(r => setTimeout(r, 15000))]);
-
-  return {
-    sucesso: !!this.questoesAPI?.questions,
-    questoes: this.questoesAPI
-  };
-}
-
 
   async fechar() {
     if (this.browser) await this.browser.close();

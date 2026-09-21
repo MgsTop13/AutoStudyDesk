@@ -8,6 +8,8 @@ export default function Captcha({ task, onClose, sessionId }) {
     const [image, setImage] = useState("");
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
+    const [sucesso, setSucesso] = useState(false);
+    const [resultados, setResultados] = useState(null);
 
     useEffect(() => {
         async function carregarCaptcha() {
@@ -20,7 +22,6 @@ export default function Captcha({ task, onClose, sessionId }) {
                     tarefaId: task.id
                 });
 
-                console.log("📦 Resposta recebida:", response.data.captcha.challengeId);
                 const raw = response.data.captcha.imagem;
                 const src = raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
                 setImage(src);
@@ -40,28 +41,33 @@ export default function Captcha({ task, onClose, sessionId }) {
         if (!captchaT.trim()) return;
 
         try {
-            const response = await api.post("/tarefas/captcha", {
+            setCarregando(true);
+            setErro("");
+
+            const response = await api.post("/tarefas/captcha-ia-preencher", {
                 sessionId,
                 resposta: captchaT.trim()
             });
 
-            console.log("Resposta do /tarefas/captcha:", response.data);
+            console.log("📦 Resultado:", response.data);
 
             if (!response.data.sucesso) {
                 setErro(response.data.details || "Captcha incorreto");
                 return;
             }
 
-            console.log("✅ Questões liberadas:", response.data.questoes);
-            const responseGemini = await api.post("/EnviarAtividade", {
-                page: response.data.questoes,
-                sessionId: sessionId
-            });
-            console.log(responseGemini)
-            onClose();
+            setResultados(response.data.resultadosPreenchimento);
+            setSucesso(true);
+
+            setTimeout(() => {
+                onClose();
+            }, 3000);
+
         } catch (error) {
             console.error(error);
-            setErro("Erro ao enviar captcha");
+            setErro("Erro ao processar");
+        } finally {
+            setCarregando(false);
         }
     }
 
@@ -70,27 +76,32 @@ export default function Captcha({ task, onClose, sessionId }) {
             <h2 onClick={onClose}>Fechar</h2>
 
             <div className="info">
+                {carregando && <p>Processando...</p>}
 
-                {carregando && <p>Carregando captcha...</p>}
+                {!carregando && image && !sucesso && (
+                    <>
+                        <img src={image} alt="captcha" />
+                        <h3>Por favor, resolva o captcha</h3>
+                        <input
+                            type="text"
+                            value={captchaT}
+                            onChange={(e) => setCaptchaT(e.target.value)}
+                        />
+                        <button onClick={enviarCaptcha}>
+                            Enviar
+                        </button>
+                    </>
+                )}
 
-                {!carregando && image && (
-                    <img src={image} alt="captcha" />
+                {sucesso && (
+                    <div>
+                        <h3>✅ Tarefa preenchida!</h3>
+                        <p>Acertos: {resultados?.filter(r => r.ok).length}/{resultados?.length}</p>
+                        <p>Vá no site e confirme o envio.</p>
+                    </div>
                 )}
 
                 {erro && <p style={{ color: "red" }}>{erro}</p>}
-
-                <h2>Por favor, envie o captcha para a lição ser enviada</h2>
-
-                <input
-                    type="text"
-                    value={captchaT}
-                    onChange={(e) => setCaptchaT(e.target.value)}
-                    disabled={carregando}
-                />
-
-                <button onClick={enviarCaptcha} disabled={carregando}>
-                    Enviar
-                </button>
             </div>
         </div>
     );
