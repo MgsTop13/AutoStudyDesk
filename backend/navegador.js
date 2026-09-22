@@ -27,7 +27,7 @@ class Navegador {
 
   async iniciar() {
     this.browser = await chromium.launch({
-      headless: false,
+      headless: true,
       args: ["--disable-blink-features=AutomationControlled"]
     });
     this.page = await this.browser.newPage();
@@ -192,17 +192,18 @@ class Navegador {
       await this.page.waitForTimeout(500);
     }
 
+    const confirmarBtn = this.page.locator('button:has-text("Confirmar")').first();
+    if (await confirmarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await confirmarBtn.click();
+      await this.page.waitForTimeout(2000);
+    }
+
     const avancarBtn = this.page.locator('button:has-text("Avançar")').first();
     if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
       await avancarBtn.click();
       await this.page.waitForTimeout(2000);
     }
 
-    const confirmarBtn = this.page.locator('button:has-text("Confirmar")').first();
-    if (await confirmarBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await confirmarBtn.click();
-      await this.page.waitForTimeout(2000);
-    }
 
     const promessaQuestoes = new Promise((resolve) => {
       this._promessaQuestoes = resolve;
@@ -220,6 +221,7 @@ class Navegador {
   // ==========================================
   async preencherRespostas(respostas) {
     const resultados = [];
+    console.log("CHEGOU", respostas)
 
     for (const r of respostas) {
       const questao = this.questoesAPI.questions.find(q => q.id === r.id);
