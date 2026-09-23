@@ -229,16 +229,15 @@ class Navegador {
       }
 
       try {
-        // Container da questão
         const container = this.page.locator(`[chave*="${r.id}"]`).first();
 
         // ==========================================
-        // SINGLE
+        // SINGLE (radio, value = índice)
         // ==========================================
         if (r.tipo === 'single') {
           const idx = r.valor.charCodeAt(0) - 65;
           const radio = container.locator(`input[type="radio"][value="${idx}"]`);
-          
+
           if (await radio.count() > 0) {
             await radio.first().check({ force: true });
             await this.page.waitForTimeout(200);
@@ -251,18 +250,31 @@ class Navegador {
         }
 
         // ==========================================
-        // MULTI
+        // MULTI (checkbox, ID = índice) ← CORRIGIDO
         // ==========================================
         else if (r.tipo === 'multi') {
           const letras = Array.isArray(r.valor) ? r.valor : [r.valor];
-          
+
           for (const letra of letras) {
             const idx = letra.charCodeAt(0) - 65;
-            const radio = container.locator(`input[type="radio"][value="${idx}"], input[type="checkbox"][value="${idx}"]`);
-            
-            if (await radio.count() > 0) {
-              await radio.first().check({ force: true });
+
+            // ✅ MUI Checkbox: ID do input é o índice
+            const checkbox = container.locator(`input[type="checkbox"]#${idx}`);
+
+            if (await checkbox.count() > 0) {
+              await checkbox.first().check({ force: true });
               await this.page.waitForTimeout(200);
+              console.log(`   ✓ ${letra} marcada`);
+            } else {
+              // Fallback: tenta por value
+              const cbFallback = container.locator(`input[type="checkbox"][value="${idx}"]`);
+              if (await cbFallback.count() > 0) {
+                await cbFallback.first().check({ force: true });
+                await this.page.waitForTimeout(200);
+                console.log(`   ✓ ${letra} marcada (fallback)`);
+              } else {
+                console.log(`   ❌ Checkbox ${letra} (id=${idx}) não encontrado`);
+              }
             }
           }
           resultados.push({ id: r.id, ok: true });
@@ -270,16 +282,16 @@ class Navegador {
         }
 
         // ==========================================
-        // TRUE-FALSE
+        // TRUE-FALSE (radio, value = true/false)
         // ==========================================
         else if (r.tipo === 'true-false') {
           const valores = r.valor;
           const grupos = await container.locator('[role="radiogroup"]').all();
 
           for (let i = 0; i < Math.min(grupos.length, valores.length); i++) {
-            const valor = valores[i]; // true ou false
+            const valor = valores[i];
             const radio = grupos[i].locator(`input[type="radio"][value="${valor}"]`);
-            
+
             if (await radio.count() > 0) {
               await radio.first().check({ force: true });
               await this.page.waitForTimeout(150);
@@ -290,7 +302,7 @@ class Navegador {
         }
 
         // ==========================================
-        // TEXT_AI
+        // TEXT_AI (textarea)
         // ==========================================
         else if (r.tipo === 'text_ai') {
           const textarea = container.locator('textarea[placeholder="Responder"]').first();
@@ -305,7 +317,7 @@ class Navegador {
         }
 
         // ==========================================
-        // FILL-WORDS (MUI Select)
+        // FILL-WORDS (MUI Select + data-value)
         // ==========================================
         else if (r.tipo === 'fill-words') {
           const palavras = r.valor;
@@ -322,12 +334,12 @@ class Navegador {
 
             // 2. Clica na opção pelo data-value
             const opcao = this.page.locator(`li[role="option"][data-value="${palavra}"]`).first();
-            
+
             if (await opcao.count() > 0) {
               await opcao.click();
               await this.page.waitForTimeout(300);
             } else {
-              console.log(`   ⚠️ Opção "${palavra}" não encontrada, tentando por texto`);
+              console.log(`   ⚠️ Opção "${palavra}" não achada por data-value, tentando texto`);
               const opcaoTexto = this.page.locator(`li[role="option"]:has-text("${palavra}")`).first();
               if (await opcaoTexto.count() > 0) {
                 await opcaoTexto.click();
@@ -340,7 +352,7 @@ class Navegador {
         }
 
         // ==========================================
-        // ORDER-SENTENCES
+        // ORDER-SENTENCES (TODO)
         // ==========================================
         else if (r.tipo === 'order-sentences') {
           console.log(`⚠️ Q${questao.order}: order-sentences ainda não implementado`);

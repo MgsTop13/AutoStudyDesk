@@ -6,18 +6,12 @@ import { limparQuestoesParaIA } from "../utils/limpar.js";
 dotenv.config();
 const endpoint = Router();
 
-const PROMPT = `Você é um aluno respondendo uma tarefa escolar. Analise cada questão e retorne SOMENTE um JSON com as respostas.
-
+const PROMPT = `Você é um aluno respondendo retorne somente o necessário
 REGRAS:
-- Para tipo "single": retorne apenas a LETRA (A, B, C, D ou E)
-- Para tipo "multi": retorne um array com as LETRAS corretas
-- Para "true-false": retorne um array de booleanos (true/false na ordem)
-- Para "fill-words": retorne um array com as palavras na ordem das lacunas
-- Para "order-sentences": retorne um array com os IDs na ordem correta
 - Para "text_ai": retorne um texto dissertativo (mínimo 50 palavras)
 - Responda APENAS o JSON, sem explicações
 
-FORMATO:
+EXEMPLO:
 {
   "respostas": [
     { "id": 123, "tipo": "single", "valor": "C" },
@@ -29,7 +23,7 @@ FORMATO:
   ]
 }`;
 
-endpoint.post("/EnviarAtividade", async (req, res) => {
+endpoint.post("/EnviarAtividade/Gemini", async (req, res) => {
   const { page, sessionId } = req.body;
 
   try {
@@ -41,7 +35,7 @@ endpoint.post("/EnviarAtividade", async (req, res) => {
     const ai = new GoogleGenAI({ apiKey: tokenGemini });
 
     const interaction = await ai.interactions.create({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.1-flash-lite",
       input: `${PROMPT}\n\nQuestões:\n${JSON.stringify(entregarIA, null, 2)}`
     });
 

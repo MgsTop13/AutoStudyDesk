@@ -44,7 +44,7 @@ export default function Captcha({ task, onClose, sessionId }) {
             setCarregando(true);
             setErro("");
 
-            const response = await api.post("/tarefas/captcha-ia-preencher", {
+            const response = await api.post("/tarefas/EnviarAtividade/Gemini", {
                 sessionId,
                 resposta: captchaT.trim()
             });

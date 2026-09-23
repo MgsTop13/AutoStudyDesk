@@ -102,7 +102,7 @@ endpoint.post("/tarefas/captcha", async (req, res) => {
 // POST /tarefas/captcha-ia-preencher
 // Faz TUDO: valida captcha + chama IA + preenche
 // ==========================================
-endpoint.post("/tarefas/captcha-ia-preencher", async (req, res) => {
+endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
   try {
     const { sessionId, resposta } = req.body;
     const navegador = sessaoManager.get(sessionId);
@@ -127,7 +127,7 @@ endpoint.post("/tarefas/captcha-ia-preencher", async (req, res) => {
     const ai = new GoogleGenAI({ apiKey: tokenGemini });
 
     const interaction = await ai.interactions.create({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.1-flash-lite",
       input: `${PROMPT}\n\nQuestões:\n${JSON.stringify(questoesLimpa, null, 2)}`
     });
 
