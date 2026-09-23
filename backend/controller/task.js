@@ -118,14 +118,15 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
         details: "CAPTCHA inválido, tente novamente"
       });
     }
-
     // 2. Limpa questões
     const questoesLimpa = limparQuestoesParaIA(resultado.questoes);
-
     // 3. Chama Gemini
     const tokenGemini = process.env.gemini;
     const ai = new GoogleGenAI({ apiKey: tokenGemini });
-
+    
+    console.log(ai)
+    
+    
     const interaction = await ai.interactions.create({
       model: "gemini-3.1-flash-lite",
       input: `${PROMPT}\n\nQuestões:\n${JSON.stringify(questoesLimpa, null, 2)}`
@@ -153,7 +154,7 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
 
   } catch (error) {
     console.error('🔴 ERRO:', error.message);
-    return res.status(500).json({ sucesso: false, error: error.message });
+    return res.status(500).json({ sucesso: false, error: error });
   }
 });
 
