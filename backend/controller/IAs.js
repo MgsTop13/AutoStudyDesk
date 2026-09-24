@@ -3,6 +3,8 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { limparQuestoesParaIA } from "../utils/limpar.js";
 
+import {InsertTask} from "../repository/AIRep.js";
+
 dotenv.config();
 const endpoint = Router();
 
@@ -54,4 +56,19 @@ endpoint.post("/EnviarAtividade/Gemini", async (req, res) => {
   }
 });
 
+
+endpoint.post("/SalvarAtividade", async (req, res) => {
+  try {
+    const taskInfo = req.body;
+    const BANCO = await InsertTask(taskInfo);
+
+    res.status(200).send({
+      b: BANCO
+    })
+  } catch (error) {
+    res.status(500).send({
+      error: error.message
+    })
+  }
+})
 export default endpoint;
