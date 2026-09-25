@@ -39,6 +39,7 @@ export default function Login() {
 
     return (
         <main className="login">
+            <h1>Bem vindo(a) ao Auto StudyDesk!</h1>
             <div className="inputs">
                 <div className="ra">
                     <input className="text" type="text" placeholder="ra" value={ra} onChange={(e) => setRa(e.target.value)} />

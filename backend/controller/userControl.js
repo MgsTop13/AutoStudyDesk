@@ -2,10 +2,6 @@ import { Router } from "express";
 import sessaoManager from "../section.js";
 const endpoint = Router();
 
-// ==========================================
-// POST /login
-// Retorna dados essenciais (como o site pago)
-// ==========================================
 endpoint.post("/login", async (req, res) => {
   try {
     const { ra, digito, senha } = req.body;
@@ -16,13 +12,8 @@ endpoint.post("/login", async (req, res) => {
 
     const { sessionId, navegador } = await sessaoManager.criar();
 
-    // Faz login (rápido, espera API responder)
     await navegador.login(ra, digito, senha);
-
-    // Busca tarefas
-    //const tarefas = await navegador.buscarTarefas();
-
-    // ⚡ Retorna SÓ o essencial
+    
     return res.json({
       sessionId,
       aluno: navegador.aluno,
@@ -36,9 +27,6 @@ endpoint.post("/login", async (req, res) => {
   }
 });
 
-// ==========================================
-// POST /logout
-// ==========================================
 endpoint.post("/logout", async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -49,10 +37,7 @@ endpoint.post("/logout", async (req, res) => {
   }
 });
 
-// ==========================================
-// GET /sessao/:sessionId
-// ==========================================
-endpoint.get("/sessao/:sessionId", (req, res) => {
+endpoint.get("/sessao/:sessionId", async(req,res) => {
   const { sessionId } = req.params;
   const navegador = sessaoManager.get(sessionId);
 
@@ -67,10 +52,6 @@ endpoint.get("/sessao/:sessionId", (req, res) => {
   });
 });
 
-// ==========================================
-// GET /sessao/:sessionId/tokens
-// (DEBUG) Retorna os tokens capturados
-// ==========================================
 endpoint.get("/sessao/:sessionId/tokens", (req, res) => {
   const { sessionId } = req.params;
   const navegador = sessaoManager.get(sessionId);
@@ -89,4 +70,11 @@ endpoint.get("/sessao/:sessionId/tokens", (req, res) => {
   });
 });
 
+endpoint.post("/user/SaveToken", async(req,res) => {
+  try {
+    
+  } catch (error) {
+    
+  }
+})
 export default endpoint;

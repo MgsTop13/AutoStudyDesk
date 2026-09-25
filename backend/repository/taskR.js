@@ -17,14 +17,14 @@ export async function InsertTask(task) {
 
 export async function ListTask(task) {
     const command = `
-        SELECT * FROM TASKS
-            WHERE id_Task = ? OR nameTask = ?
+        SELECT * FROM Tasks
+            WHERE id_Task = ?;
     `
-
-    const [result] = await connectDatabase.query(command, [
-        task.id,
-        task.name
-    ])
-
-    return result;
+    const [result] = await connectDatabase.query(command, task.id)
+    
+    if(result.length === 0){
+        return "Não tem alguma resposta no banco"
+    } else{
+        return result;
+    }
 }

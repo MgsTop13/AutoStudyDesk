@@ -2,7 +2,9 @@ import { Router } from "express";
 import sessaoManager from "../section.js";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import { limparQuestoesParaIA } from "../utils/limpar.js";
+import { limparQuestoesParaIA } from "../utils/cleanActivy.js";
+import {InsertTask, ListTask} from "../repository/taskR.js";
+
 
 dotenv.config();
 const endpoint = Router();
@@ -33,20 +35,37 @@ FORMATO:
 // ==========================================
 // GET /tarefas/:sessionId
 // ==========================================
+
+// controller/task.js
 endpoint.get("/tarefas/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
     const navegador = sessaoManager.get(sessionId);
-
     if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
 
+    // ✅ Só busca 1x (todas)
     const tarefas = await navegador.buscarTarefas();
+
     return res.json({ tarefas });
   } catch (error) {
     return res.status(500).json({ erro: error.message });
   }
 });
 
+endpoint.get("/tarefasExpiradas/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const navegador = sessaoManager.get(sessionId);
+    if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
+
+    // ✅ Só busca 1x (todas)
+    const tarefas = await navegador.buscarTarefasExpiradas();
+
+    return res.json({ tarefas });
+  } catch (error) {
+    return res.status(500).json({ erro: error.message });
+  }
+});
 // ==========================================
 // POST /tarefas/abrir
 // ==========================================
@@ -118,39 +137,48 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
         details: "CAPTCHA inválido, tente novamente"
       });
     }
-    // 2. Limpa questões
     const questoesLimpa = limparQuestoesParaIA(resultado.questoes);
-    // 3. Chama Gemini
-    const tokenGemini = process.env.gemini;
-    const ai = new GoogleGenAI({ apiKey: tokenGemini });
-    
-    console.log(ai)
-    
-    
-    const interaction = await ai.interactions.create({
-      model: "gemini-3.1-flash-lite",
-      input: `${PROMPT}\n\nQuestões:\n${JSON.stringify(questoesLimpa, null, 2)}`
+    const ExistAnswer = await ListTask({
+      id: questoesLimpa.tarefaId
     });
 
-    let texto = interaction.output_text || "";
-    texto = texto.replace(/```json/g, "").replace(/```/g, "").trim();
-    const respostas = JSON.parse(texto).respostas;
+    if (ExistAnswer === "Não tem alguma resposta no banco") {
+      const tokenGemini = process.env.gemini;
+      const ai = new GoogleGenAI({ apiKey: tokenGemini });
 
-    // 4. Preenche no site
-    const resultados = await navegador.preencherRespostas(respostas);
+      const interaction = await ai.interactions.create({
+        model: "gemini-3.1-flash-lite",
+        input: `${PROMPT}\n\nQuestões:\n${JSON.stringify(questoesLimpa, null, 2)}`
+      });
 
-    // 5. Retorna
-    return res.json({
-      sucesso: true,
-      etapas: {
-        captcha: "ok",
-        ia: "ok",
-        preenchimento: resultados
-      },
-      questoes: questoesLimpa,
-      respostasIA: respostas,
-      resultadosPreenchimento: resultados
-    });
+      let texto = interaction.output_text || "";
+      texto = texto.replace(/```json/g, "").replace(/```/g, "").trim();
+      const respostas = JSON.parse(texto).respostas;
+
+      // 4. Preenche no site
+      const resultados = await navegador.preencherRespostas(respostas);
+      const saveOnBank = await InsertTask({
+        id: questoesLimpa.tarefaId,
+        name: questoesLimpa.titulo,
+        json: respostas
+      });
+
+      // 5. Retorna
+      return res.json({
+        sucesso: true,
+        preenchimento: resultados,
+        respostasIA: respostas,
+        existeAntes: false,
+        bancoSalvou: saveOnBank.affectedRows
+      });
+    } else {
+      const resultadosInWebsite = await navegador.preencherRespostas(ExistAnswer[0].questions);
+      return res.json({
+        sucesso: true,
+        existeAntes: true,
+        navegadorPreencheu: resultadosInWebsite
+      })
+    }
 
   } catch (error) {
     console.error('🔴 ERRO:', error.message);

@@ -4,11 +4,15 @@
     box-sizing: border-box;
 }
 
+
 $bg: #2e2e2e;
 $bgCard: #1e1e1e;
 $bgButton: #f08c00;
 $text1: #ffffff;
 $text2: #343a40;
+body{
+    background-color: $bg;
+}
 
 main{
     height: 120vh;

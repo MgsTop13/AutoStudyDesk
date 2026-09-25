@@ -1,6 +1,0 @@
-let ia = {
-  "sucess": true,
-  "IA": "```json\n{\n  \"respostas\": [\n    {\n      \"id\": 464771192,\n      \"tipo\": \"multi\",\n      \"valor\": [\"A\", \"C\"]\n    },\n    {\n      \"id\": 464771193,\n      \"tipo\": \"true-false\",\n      \"valor\": [true, false, true, false]\n    },\n    {\n      \"id\": 464771196,\n      \"tipo\": \"single\",\n      \"valor\": \"D\"\n    },\n    {\n      \"id\": 464771198,\n      \"tipo\": \"single\",\n      \"valor\": \"B\"\n    },\n    {\n      \"id\": 464771200,\n      \"tipo\": \"single\",\n      \"valor\": \"A\"\n    },\n    {\n      \"id\": 464771202,\n      \"tipo\": \"text_ai\",\n      \"valor\": \"A crônica é um gênero literário que se destaca por extrair do cotidiano momentos simples e banais, transformando fatos ordinários do dia a dia em matéria de reflexão profunda. O cronista não se limita a descrever passivamente os acontecimentos; pelo contrário, ele lança um olhar crítico, poético ou bem-humorado sobre a cena observada. Com esse recurso, o autor busca despertar a sensibilidade do leitor, levando-o a questionar aspectos da sociedade, das relações humanas e das contradições sociais que muitas vezes passam despercebidos na rotina. Assim, a crônica humaniza o trivial e estabelece um diálogo direto com o leitor.\"\n    }\n  ]\n}\n```"
-}
-
-console.log(ia.IA);

@@ -1,21 +1,6 @@
--Banco de dados:
-    users:
-        id, name, classrom, tokenGemini(ou salvar em um lugar mais seguro, nao sei, porque se tiver so minha api key o teste gratis vai embora)
-        
-        exemplo:
-            13, Marcos, 2A noturno, 7832910731
-
-
-    answers:
-        id(O mesmo online), idUser, userName, nameTask, alternative, multipleChoise, arrayWords, IAText
-        
-        exemplo:
-            64728121, 13, Marcos, Tarefa 6 Progressao geometrica, "{321: A, 322: B}", "A, D", "Batata Costela Bife", "A progressao geometrica.."
-
-
--Cache com Redis.
+BackEnd:
+    -Cache com Redis.
+    -Apagar code inútil
 
 FrontEnd(Depois):
-    -Melhorar as opções de .map de ativdades no localstorage (mais rapido),
-    -Atividades Expiradas,
     -Reload de captcha

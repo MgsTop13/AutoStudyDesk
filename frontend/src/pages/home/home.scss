@@ -4,16 +4,85 @@
     $bgButton: #f08c00;
     $text1: #ffffff;
     $text2: #343a40;
+    $gradientStart: #1e3a5f;
+    $gradientEnd: #2a5298;
+    $danger: #d9534f;
+    $dangerHover: #c9302c;
 
     min-height: 100vh;
     background-color: $bg;
     color: $text1;
 
+    .aluno-card {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        background: linear-gradient(135deg, $gradientStart, $gradientEnd);
+        color: $text1;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+
+        .avatar {
+            width: 4.375rem;
+            height: 4.375rem;
+            border-radius: 50%;
+            background: $text1;
+            color: $gradientEnd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .info-aluno {
+            flex: 1;
+
+            h1 {
+                margin: 0 0 0.5rem 0;
+                font-size: 1.375rem;
+            }
+
+            .emails {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                font-size: 0.8125rem;
+                opacity: 0.9;
+                margin-bottom: 0.375rem;
+            }
+
+            .perfil {
+                font-size: 0.75rem;
+                opacity: 0.8;
+                margin: 0;
+            }
+        }
+    }
+
+    .btn-logout {
+        margin-top: 1.25rem;
+        padding: 0.625rem 1.25rem;
+        background: $danger;
+        color: $text1;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1rem;
+
+        &:hover {
+            background: $dangerHover;
+        }
+    }
+
     h1 {
         text-align: start;
-        font-size: 28px;
+        font-size: 1.75rem;
         font-weight: 600;
-        margin-bottom: 24px;
+        margin-bottom: 1.5rem;
         padding: 2%;
     }
 
@@ -24,9 +93,9 @@
         margin: 3%;
         display: flex;
         flex-direction: row;
-        gap: 24px;
+        gap: 1.5rem;
 
-        border-radius: 20px;
+        border-radius: 1.25rem;
         padding: 3%;
 
         .info {
@@ -34,7 +103,7 @@
 
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+            gap: 1rem;
             align-content: start;
 
             .link {
@@ -54,11 +123,11 @@
                     justify-content: center;
                     text-align: center;
 
-                    min-height: 60px;
-                    padding: 12px;
+                    min-height: 3.75rem;
+                    padding: 0.75rem;
 
-                    border-radius: 12px;
-                    font-size: 16px;
+                    border-radius: 0.75rem;
+                    font-size: 1rem;
                     font-weight: 600;
 
                     cursor: pointer;
@@ -74,29 +143,37 @@
 
         .boletim {
             width: 45%;
-            min-height: 280px;
+            min-height: 17.5rem;
 
             background-color: $bgButton;
             color: $text2;
 
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 1rem;
+            padding: 1rem;
 
             h2 {
-                font-size: 18px;
+                font-size: 1.125rem;
                 font-weight: 600;
             }
         }
     }
 
     .plataformas {
-        margin-top: 24px;
-        font-size: 18px;
+        margin-top: 1.5rem;
+        font-size: 1.125rem;
+        text-align: center;
+    }
+
+    h2 {
         text-align: center;
     }
 
     @media (max-width: 768px) {
-        padding: 6% 5%;
+        .aluno-card {
+            width: 100%;
+            flex-direction: column;
+            text-align: center;
+        }
 
         .all {
             flex-direction: column;
@@ -107,8 +184,24 @@
             }
 
             .boletim {
-                min-height: 240px;
+                min-height: 15rem;
             }
+        }
+    }
+
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        .aluno-card .avatar {
+            width: 3.75rem;
+            height: 3.75rem;
+            font-size: 1.5rem;
+        }
+
+        .all .info {
+            grid-template-columns: 1fr;
         }
     }
 }

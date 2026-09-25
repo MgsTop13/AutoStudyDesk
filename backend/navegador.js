@@ -27,7 +27,7 @@ class Navegador {
 
   async iniciar() {
     this.browser = await chromium.launch({
-      headless: true,
+      headless: false,
       args: ["--disable-blink-features=AutomationControlled"]
     });
     this.page = await this.browser.newPage();
@@ -79,17 +79,31 @@ class Navegador {
 
   _processarLogin(body) {
     if (body.token) this.authToken = body.token;
-    if (body.sedToken) this.sedToken = body.sedToken;
-    if (body.sedCookies) this.sedCookies = body.sedCookies;
-    if (body.codigoAluno) this.codigoAluno = body.codigoAluno;
-    if (body.pubTargets) this.pubTargets = body.pubTargets;
+    if (body.tokenResumo) this.tokenResumo = body.tokenResumo;
 
-    this.aluno = body.aluno || {
-      nome: body.nome,
-      ra: body.ra,
-      turma: body.turma,
-      escola: body.escola
+    const d = body.DadosUsuario || {};
+    const perfil = d.PERFIS?.[0] || {};
+    const extra = d.A?.[0] || {};
+
+    this.aluno = {
+      codigoUsuario: d.CD_USUARIO,
+      ra: body.statusRetorno || d.LOGIN,
+      login: d.LOGIN,
+      nome: d.NAME,
+      nick: d.NM_NICK,
+
+      emailGoogle: d.EMAIL_GOOGLE,
+      emailMS: d.EMAIL_MS,
+
+      // Perfil
+      perfil: perfil.NM_PERFIL,
+      comportamento: perfil.COMPORTAMENTO,
+
+      // Extras
+      dataNascimento: extra.DT_NASC,
     };
+
+    this.rawLogin = body;
   }
 
   async login(ra, digito, senha) {
@@ -120,6 +134,24 @@ class Navegador {
     });
 
     await this.page.goto("https://saladofuturo.educacao.sp.gov.br/tarefas", {
+      waitUntil: "domcontentloaded",
+      timeout: 50000
+    });
+
+    await Promise.race([
+      promessaTarefas,
+      new Promise(r => setTimeout(r, 10000))
+    ]);
+
+    return this.listaTarefas;
+  }
+
+  async buscarTarefasExpiradas() {
+    const promessaTarefas = new Promise((resolve) => {
+      this._promessaTarefas = resolve;
+    });
+
+    await this.page.goto("https://saladofuturo.educacao.sp.gov.br/tarefas?status=Expiradas", {
       waitUntil: "domcontentloaded",
       timeout: 50000
     });
@@ -254,29 +286,24 @@ class Navegador {
         // ==========================================
         // MULTI (checkbox, ID = índice) ← CORRIGIDO
         // ==========================================
+        // ==========================================
+        // MULTI (checkbox, ID = índice)
+        // ==========================================
         else if (r.tipo === 'multi') {
           const letras = Array.isArray(r.valor) ? r.valor : [r.valor];
 
           for (const letra of letras) {
             const idx = letra.charCodeAt(0) - 65;
 
-            // ✅ MUI Checkbox: ID do input é o índice
-            const checkbox = container.locator(`input[type="checkbox"]#${idx}`);
+            // ✅ [id="0"] em vez de #0
+            const checkbox = container.locator(`input[type="checkbox"][id="${idx}"]`);
 
             if (await checkbox.count() > 0) {
               await checkbox.first().check({ force: true });
               await this.page.waitForTimeout(200);
               console.log(`   ✓ ${letra} marcada`);
             } else {
-              // Fallback: tenta por value
-              const cbFallback = container.locator(`input[type="checkbox"][value="${idx}"]`);
-              if (await cbFallback.count() > 0) {
-                await cbFallback.first().check({ force: true });
-                await this.page.waitForTimeout(200);
-                console.log(`   ✓ ${letra} marcada (fallback)`);
-              } else {
-                console.log(`   ❌ Checkbox ${letra} (id=${idx}) não encontrado`);
-              }
+              console.log(`   ❌ Checkbox ${letra} (id=${idx}) não encontrado`);
             }
           }
           resultados.push({ id: r.id, ok: true });
@@ -359,6 +386,12 @@ class Navegador {
         else if (r.tipo === 'order-sentences') {
           console.log(`⚠️ Q${questao.order}: order-sentences ainda não implementado`);
           resultados.push({ id: r.id, ok: false, motivo: "nao_implementado" });
+        }
+
+        const avancarBtn = this.page.locator('button:has-text("Salvar Rascunho")').first();
+        if (await avancarBtn.isEnabled({ timeout: 3000 }).catch(() => false)) {
+          await avancarBtn.click();
+          await this.page.waitForTimeout(2000);
         }
 
       } catch (e) {
