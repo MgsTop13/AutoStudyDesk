@@ -5,16 +5,19 @@ import { useNavigate } from "react-router";
 import "./login.scss"
 import "../../../scss/global.scss"
 
-
-
 export default function Login() {
-    const [ra, setRa] = useState();
+    const [ra, setRa] = useState("");
     const [di, setDi] = useState();
-    const [pass, setPass] = useState();
+    const [pass, setPass] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     async function EnviarDados() {
+        if(!ra || !di || !pass){
+            alert("Por favor, insira todos os campos CORRETAMENTE!")
+            return;
+        }
+
         try {
             setIsLoading(true);
             const response = await api.post("/login", {
@@ -23,8 +26,7 @@ export default function Login() {
                 senha: pass
             });
 
-            localStorage.setItem("session", response.data.sessionId)
-
+            localStorage.setItem("session", response.data.sessionId);
             if(response.data.sessionId){
                 navigate("/Home")
             } else{
@@ -46,7 +48,8 @@ export default function Login() {
                     <input className="digit" type="number" placeholder="digito" value={di} onChange={(e) => setDi(e.target.value)} />
                 </div>
 
-                <input className="text" type="text" placeholder="senha" value={pass} onChange={(e) => setPass(e.target.value)} />
+                <input className="text" type="password" placeholder="senha" value={pass} onChange={(e) => setPass(e.target.value)} />
+
             <button onClick={EnviarDados}>{isLoading ? "Calma" : "Pode Ir"}</button>
             </div>
 

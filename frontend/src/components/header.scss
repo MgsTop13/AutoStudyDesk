@@ -1,8 +1,42 @@
-header{
+header {
     padding: 2%;
     width: 100%;
-    
-    .link{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    .link {
         font-size: 1.4rem;
+        color: #ffffff;
+        text-decoration: none;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+
+    .btn-settings {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-icon {
+            width: 1.75rem;
+            height: 1.75rem;
+            object-fit: contain;
+            filter: brightness(0) invert(1); // deixa branco
+        }
     }
 }

@@ -1,5 +1,7 @@
 import { Router } from "express";
 import sessaoManager from "../section.js";
+import { LoadToken, SaveToken } from "../repository/userR.js"
+import { criptografar, descriptografar } from "../utils/crypt.js"
 const endpoint = Router();
 
 endpoint.post("/login", async (req, res) => {
@@ -13,7 +15,7 @@ endpoint.post("/login", async (req, res) => {
     const { sessionId, navegador } = await sessaoManager.criar();
 
     await navegador.login(ra, digito, senha);
-    
+
     return res.json({
       sessionId,
       aluno: navegador.aluno,
@@ -22,7 +24,7 @@ endpoint.post("/login", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Erro no login:", error);
+    console.error("Erro no login:", error);
     return res.status(500).json({ erro: error.message });
   }
 });
@@ -70,11 +72,36 @@ endpoint.get("/sessao/:sessionId/tokens", (req, res) => {
   });
 });
 
-endpoint.post("/user/SaveToken", async(req,res) => {
+endpoint.post("/SaveText", async(req,res) => {
   try {
-    
+    const user = req.body;
+    const bancoResponse = await SaveToken(user);
+
+    res.send({
+      tokenIsSaved: bancoResponse.affectedRows
+    });
+
   } catch (error) {
-    
+    res.status(500).send({
+      error: error.message
+    })
   }
-})
+});
+
+endpoint.post("/LoadText", async(req,res) => {
+  try {
+    const {username} = req.body;
+    const newToken = await LoadToken(username);
+    
+    res.send({
+      token: newToken
+    });
+
+  } catch (error) {
+    res.status(500).send({
+      error: error.message
+    })
+  }
+});
+
 export default endpoint;

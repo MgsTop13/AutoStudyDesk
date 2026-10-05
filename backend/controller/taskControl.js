@@ -1,9 +1,9 @@
+import dotenv from "dotenv";
 import { Router } from "express";
 import sessaoManager from "../section.js";
 import { GoogleGenAI } from "@google/genai";
-import dotenv from "dotenv";
-import { limparQuestoesParaIA } from "../utils/cleanActivy.js";
 import {InsertTask, ListTask} from "../repository/taskR.js";
+import { limparQuestoesParaIA } from "../utils/cleanActivy.js";
 
 
 dotenv.config();
@@ -32,18 +32,12 @@ FORMATO:
   ]
 }`;
 
-// ==========================================
-// GET /tarefas/:sessionId
-// ==========================================
-
-// controller/task.js
 endpoint.get("/tarefas/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
     const navegador = sessaoManager.get(sessionId);
     if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
 
-    // ✅ Só busca 1x (todas)
     const tarefas = await navegador.buscarTarefas();
 
     return res.json({ tarefas });
@@ -58,7 +52,6 @@ endpoint.get("/tarefasExpiradas/:sessionId", async (req, res) => {
     const navegador = sessaoManager.get(sessionId);
     if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
 
-    // ✅ Só busca 1x (todas)
     const tarefas = await navegador.buscarTarefasExpiradas();
 
     return res.json({ tarefas });
@@ -66,9 +59,7 @@ endpoint.get("/tarefasExpiradas/:sessionId", async (req, res) => {
     return res.status(500).json({ erro: error.message });
   }
 });
-// ==========================================
-// POST /tarefas/abrir
-// ==========================================
+
 endpoint.post("/tarefas/abrir", async (req, res) => {
   try {
     const { sessionId, tarefaId } = req.body;
@@ -89,9 +80,6 @@ endpoint.post("/tarefas/abrir", async (req, res) => {
   }
 });
 
-// ==========================================
-// POST /tarefas/captcha
-// ==========================================
 endpoint.post("/tarefas/captcha", async (req, res) => {
   try {
     const { sessionId, resposta } = req.body;
@@ -112,6 +100,7 @@ endpoint.post("/tarefas/captcha", async (req, res) => {
       sucesso: true,
       questoes: resultado.questoes
     });
+
   } catch (error) {
     return res.status(500).json({ erro: error.message });
   }
@@ -123,7 +112,7 @@ endpoint.post("/tarefas/captcha", async (req, res) => {
 // ==========================================
 endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
   try {
-    const { sessionId, resposta } = req.body;
+    const { sessionId, resposta, token } = req.body;
     const navegador = sessaoManager.get(sessionId);
 
     if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
@@ -143,8 +132,8 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
     });
 
     if (ExistAnswer === "Não tem alguma resposta no banco") {
-      const tokenGemini = process.env.gemini;
-      const ai = new GoogleGenAI({ apiKey: tokenGemini });
+      const tokenDescriptografado = descriptografar(token);
+      const ai = new GoogleGenAI({ apiKey: tokenDescriptografado });
 
       const interaction = await ai.interactions.create({
         model: "gemini-3.1-flash-lite",
@@ -181,8 +170,8 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
     }
 
   } catch (error) {
-    console.error('🔴 ERRO:', error.message);
-    return res.status(500).json({ sucesso: false, error: error });
+    console.error('Error:', error.message);
+    return res.status(500).send({ sucesso: false, error: error });
   }
 });
 
