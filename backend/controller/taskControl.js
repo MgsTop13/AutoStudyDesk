@@ -112,7 +112,7 @@ endpoint.post("/tarefas/captcha", async (req, res) => {
 // ==========================================
 endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
   try {
-    const { sessionId, resposta, token } = req.body;
+    const { sessionId, resposta, tokenCriptografado } = req.body;
     const navegador = sessaoManager.get(sessionId);
 
     if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
@@ -132,7 +132,7 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
     });
 
     if (ExistAnswer === "Não tem alguma resposta no banco") {
-      const tokenDescriptografado = descriptografar(token);
+      const tokenDescriptografado = descriptografar(tokenCriptografado);
       const ai = new GoogleGenAI({ apiKey: tokenDescriptografado });
 
       const interaction = await ai.interactions.create({

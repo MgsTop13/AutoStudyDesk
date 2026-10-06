@@ -10,12 +10,9 @@ export default function Captcha({ task, onClose, sessionId }) {
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState(false);
     const [resultados, setResultados] = useState(null);
-    const name = localStorage.getItem("username");
-    console.log(name)
 
     useEffect(() => {
         async function carregarCaptcha() {
-
             try {
                 setCarregando(true);
                 setErro("");
@@ -46,16 +43,12 @@ export default function Captcha({ task, onClose, sessionId }) {
         try {
             setCarregando(true);
             setErro("");
-
-            const tokenClean = await api.post("/LoadText", {
-                username: name
-            });
-            console.log(tokenClean)
+            const tokenClean = localStorage.getItem("token");
 
             const response = await api.post("/tarefas/EnviarAtividade/Gemini", {
                 sessionId,
                 resposta: captchaT.trim(),
-                token: tokenClean.data.token
+                token: tokenClean
             });
 
             console.log("📦 Resultado:", response.data);

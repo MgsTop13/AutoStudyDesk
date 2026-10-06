@@ -78,6 +78,7 @@ endpoint.post("/SaveText", async(req,res) => {
     const bancoResponse = await SaveToken(user);
 
     res.send({
+      sucess: true,
       tokenIsSaved: bancoResponse.affectedRows
     });
 
@@ -88,13 +89,14 @@ endpoint.post("/SaveText", async(req,res) => {
   }
 });
 
-endpoint.post("/LoadText", async(req,res) => {
+endpoint.post("/LoadText/:username", async(req,res) => {
   try {
-    const {username} = req.body;
+    const username = req.params.username;
     const newToken = await LoadToken(username);
     
     res.send({
-      token: newToken
+      token: newToken,
+      temToken: true
     });
 
   } catch (error) {

@@ -14,9 +14,6 @@ export default function Settings({ onClose }) {
     const username = localStorage.getItem("username");
     const CACHE_KEY = "home_cache";
 
-    // ==========================================
-    // CARREGA DADOS DO ALUNO + VERIFICA TOKEN
-    // ==========================================
     useEffect(() => {
         async function carregar() {
             try {
@@ -31,8 +28,12 @@ export default function Settings({ onClose }) {
 
                 // 2. Verifica se já tem token salvo
                 if (username) {
-                    const resp = await api.get(`/user/token/${username}`);
+                    const resp = await api.post(`/LoadText/${username}`);
+                    console.log(resp)
                     setTemToken(resp.data.temToken);
+                    setToken(resp.data.token)
+                    localStorage.setItem("token", resp.data.token);
+                    console.log("entrei")
                 }
 
             } catch (error) {
@@ -44,9 +45,6 @@ export default function Settings({ onClose }) {
         carregar();
     }, [username]);
 
-    // ==========================================
-    // SALVAR TOKEN
-    // ==========================================
     async function salvarToken() {
         if (!token.trim()) {
             setMensagem({ tipo: "erro", texto: "Cole um token primeiro" });
@@ -85,10 +83,6 @@ export default function Settings({ onClose }) {
             <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
 
                 <h1>Configurações</h1>
-
-                {/* ==========================================
-                    CARD DO ALUNO
-                ========================================== */}
                 {carregando && !aluno ? (
                     <p className="carregando">Carregando dados...</p>
                 ) : aluno ? (
@@ -112,11 +106,8 @@ export default function Settings({ onClose }) {
                     </div>
                 ) : null}
 
-                {/* ==========================================
-                    SEÇÃO DO TOKEN
-                ========================================== */}
                 <div className="token-section">
-                    <h2>🔑 Token Gemini</h2>
+                    <h2>Token Gemini</h2>
 
                     <p className="instrucoes">
                         Para usar a IA, você precisa de uma API Key gratuita do Google.
@@ -125,7 +116,7 @@ export default function Settings({ onClose }) {
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {" "}Pegar minha key
+                            {"A"}Pegar minha key
                         </a>
                     </p>
 
@@ -141,7 +132,7 @@ export default function Settings({ onClose }) {
                             placeholder="Cole sua API Key aqui"
                             value={token}
                             onChange={(e) => setToken(e.target.value)}
-                            disabled={salvando || testando}
+                            disabled={salvando}
                         />
 
                         <div className="botoes">
@@ -163,9 +154,6 @@ export default function Settings({ onClose }) {
                     )}
                 </div>
 
-                {/* ==========================================
-                    BOTÃO FECHAR
-                ========================================== */}
                 <button className="btn-fechar" onClick={onClose}>
                     Fechar
                 </button>

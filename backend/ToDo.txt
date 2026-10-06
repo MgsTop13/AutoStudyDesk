@@ -1,6 +1,9 @@
 BackEnd:
     -Cache com Redis.
-    -Apagar code inútil
+    -Apagar code inútil.
+    -IA ta com error no captcha??.
+    -Na parte de carregar atividades colocar: https://saladofuturo.educacao.sp.gov.br/tarefas?status=A%20Fazer
 
 FrontEnd(Depois):
     -Reload de captcha
+    
