@@ -4,7 +4,7 @@ import sessaoManager from "../section.js";
 import { GoogleGenAI } from "@google/genai";
 import {InsertTask, ListTask} from "../repository/taskR.js";
 import { limparQuestoesParaIA } from "../utils/cleanActivy.js";
-
+import { descriptografar } from "../utils/crypt.js"
 
 dotenv.config();
 const endpoint = Router();
@@ -117,23 +117,14 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
 
     if (!navegador) return res.status(404).json({ erro: "Sessão não encontrada" });
 
-    // 1. Resolve CAPTCHA
-    const resultado = await navegador.resolverCaptcha(resposta);
-    if (!resultado.sucesso) {
-      return res.json({
-        sucesso: false,
-        etapa: "captcha",
-        details: "CAPTCHA inválido, tente novamente"
-      });
-    }
-    const questoesLimpa = limparQuestoesParaIA(resultado.questoes);
+    const questoesLimpa = limparQuestoesParaIA(resposta.questoes);
     const ExistAnswer = await ListTask({
       id: questoesLimpa.tarefaId
     });
 
     if (ExistAnswer === "Não tem alguma resposta no banco") {
-      const tokenDescriptografado = descriptografar(tokenCriptografado);
-      const ai = new GoogleGenAI({ apiKey: tokenDescriptografado });
+      //const tokenDescriptografado = descriptografar(tokenCriptografado);
+      const ai = new GoogleGenAI({ apiKey: tokenCriptografado });
 
       const interaction = await ai.interactions.create({
         model: "gemini-3.1-flash-lite",

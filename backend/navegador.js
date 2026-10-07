@@ -133,7 +133,7 @@ class Navegador {
       this._promessaTarefas = resolve;
     });
 
-    await this.page.goto("https://saladofuturo.educacao.sp.gov.br/tarefas", {
+    await this.page.goto("https://saladofuturo.educacao.sp.gov.br/tarefas?status=A%20Fazer", {
       waitUntil: "domcontentloaded",
       timeout: 50000
     });

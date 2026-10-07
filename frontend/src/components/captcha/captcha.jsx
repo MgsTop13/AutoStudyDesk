@@ -45,20 +45,30 @@ export default function Captcha({ task, onClose, sessionId }) {
             setErro("");
             const tokenClean = localStorage.getItem("token");
 
-            const response = await api.post("/tarefas/EnviarAtividade/Gemini", {
+            const responseCaptcha = await api.post("/tarefas/captcha", {
                 sessionId,
-                resposta: captchaT.trim(),
-                token: tokenClean
+                resposta: captchaT.trim()
             });
 
-            console.log("📦 Resultado:", response.data);
+            console.log("📦 Resultado captcha:", responseCaptcha.data);
 
-            if (!response.data.sucesso) {
-                setErro(response.data.details || "Captcha incorreto");
+            if (!responseCaptcha.data.sucesso) {
+                setErro(responseCaptcha.data.details || "Captcha incorreto");
                 return;
             }
 
-            setResultados(response.data.resultadosPreenchimento);
+            const responseGemini = await api.post("/tarefas/EnviarAtividade/Gemini", {
+                sessionId,
+                resposta: responseCaptcha.data,
+                tokenCriptografado: tokenClean
+            });
+
+            console.log("📦 Resultado Gemini:", responseGemini.data);
+
+            if (!responseGemini.data.sucesso) {
+                return "Seila";
+            }
+
             setSucesso(true);
 
             setTimeout(() => {
@@ -71,6 +81,12 @@ export default function Captcha({ task, onClose, sessionId }) {
         } finally {
             setCarregando(false);
         }
+    }
+
+    async function enviarGemini(){
+        const tokenClean = localStorage.getItem("token");
+
+        if (!tokenClean || resultados) return;
     }
 
     return (
