@@ -1,8 +1,7 @@
 BackEnd:
     -Cache com Redis.
     -Apagar code inútil.
-    -IA ta com error no captcha??.
-
+    -Transformar antigo MySQL para PostgreeSQL(Supabase)
 FrontEnd(Depois):
     -Reload de captcha
     

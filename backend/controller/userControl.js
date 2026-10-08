@@ -89,7 +89,7 @@ endpoint.post("/SaveText", async(req,res) => {
   }
 });
 
-endpoint.post("/LoadText/:username", async(req,res) => {
+endpoint.get("/LoadText/:username", async(req,res) => {
   try {
     const username = req.params.username;
     const newToken = await LoadToken(username);

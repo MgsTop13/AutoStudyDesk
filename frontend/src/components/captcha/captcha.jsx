@@ -60,7 +60,7 @@ export default function Captcha({ task, onClose, sessionId }) {
             const responseGemini = await api.post("/tarefas/EnviarAtividade/Gemini", {
                 sessionId,
                 resposta: responseCaptcha.data,
-                tokenCriptografado: tokenClean
+                token: tokenClean
             });
 
             console.log("📦 Resultado Gemini:", responseGemini.data);

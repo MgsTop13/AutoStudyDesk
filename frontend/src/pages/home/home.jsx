@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import api from "../../axios";
 import HeaderP from "../../components/header";
 import Settings from "../../components/Settings/settings.jsx";
+import "../../../scss/global.scss"
 import "./home.scss";
 
 export default function Home() {
