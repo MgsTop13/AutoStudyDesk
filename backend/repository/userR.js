@@ -1,4 +1,4 @@
-import { connectDatabase } from "../connection.js";
+import { connectDatabase } from "../oldDB.js";
 import { criptografar, descriptografar } from "../utils/crypt.js";
 
 export async function SaveToken(user) {

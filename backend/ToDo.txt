@@ -1,7 +1,7 @@
 BackEnd:
-    -Cache com Redis.
     -Apagar code inútil.
     -Transformar antigo MySQL para PostgreeSQL(Supabase)
-FrontEnd(Depois):
-    -Reload de captcha
-    
+FrontEnd:
+    -Um botão de recarregar captcha caso o usuario erre o captcha atual.
+    -Botão para ocultar/mostrar a senha no login.
+    -Quando estiver entrando na home, pedir pro backend carregar as atividades ativadas e depois as expiradas para não ter erro, e quando retornar os dados de atividade, carregar a home.

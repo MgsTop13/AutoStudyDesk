@@ -1,0 +1,7 @@
+REGRAS PARA DESENVOLVER ESSA BAGAÇA:
+    1. Utilize somente javascript puro, sem Ts.
+    2. Use soluções simples, legíveis, práticas e compativeis ao projeto (pois sou iniciante ainda).
+    3. Evite padroes e dependencias desnecessario.
+    4. Nao mude modulos inteiros quando uma correção localizada for suficiente.
+    5. Mantenha a compatibilidade no frontend e backend.
+    6. Priorize o codigo que um estudante/iniciante consiga compreender

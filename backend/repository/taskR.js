@@ -1,5 +1,5 @@
-import { connectDatabase } from "../connection.js";
-import { ConnectSupabaseDB } from "../connectionSP.js";
+import { connectDatabase } from "../oldDB.js";
+import { ConnectSupabaseDB } from "../newDB.js";
 
 
 export async function InsertTask(task) {
