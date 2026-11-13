@@ -5,7 +5,7 @@
   "main": "a.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./server.js"
+    "start": "nodemon ./src/server.js"
   },
   "keywords": [],
   "author": "",
@@ -22,9 +22,6 @@
     "nodemon": "^3.1.14",
     "playwright": "^1.61.1",
     "playwright-extra": "^4.3.6",
-    "prompt-sync": "^4.2.0",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "sharp": "^0.35.4",
-    "tesseract.js": "^7.0.0"
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }

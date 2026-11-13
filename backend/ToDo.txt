@@ -1,7 +1,9 @@
 BackEnd:
-    -Apagar code inútil.
-    -Transformar antigo MySQL para PostgreeSQL(Supabase)
+    -Separar as funções do navegador.js
+    -Melhorar o tratamento de dados do Supabase (arquivos do repositorio)
+    
 FrontEnd:
     -Um botão de recarregar captcha caso o usuario erre o captcha atual.
     -Botão para ocultar/mostrar a senha no login.
-    -Quando estiver entrando na home, pedir pro backend carregar as atividades ativadas e depois as expiradas para não ter erro, e quando retornar os dados de atividade, carregar a home.
+    -Quando estiver entrando na home, pedir pro backend carregar as atividades ativadas e depois as expiradas para não ter erro, e quando retornar os dados de atividade em cookies e logo em seguida, carregar a home com os dados de usuario e atividade em cookies.
+    -Toda vez que entra e sai da pagina de atividade, ele esta consultando a api, mas deveria consultar os cookies

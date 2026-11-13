@@ -4,4 +4,15 @@ REGRAS PARA DESENVOLVER ESSA BAGAÇA:
     3. Evite padroes e dependencias desnecessario.
     4. Nao mude modulos inteiros quando uma correção localizada for suficiente.
     5. Mantenha a compatibilidade no frontend e backend.
-    6. Priorize o codigo que um estudante/iniciante consiga compreender
+    6. Priorize o codigo que um estudante/iniciante consiga compreender.
+
+Backend:
+    Não é necessario mexer nos arquivos:
+        newDB.js, oldDB.js, routes.js, server.js
+
+    Você tem acesso nos arquivos:
+        controller/
+        repository/
+        utils/
+        navegador.js
+        section.js

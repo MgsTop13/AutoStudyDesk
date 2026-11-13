@@ -164,4 +164,5 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
   }
 });
 
+
 export default endpoint;
