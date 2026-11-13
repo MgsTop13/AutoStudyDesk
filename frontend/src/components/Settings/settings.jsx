@@ -28,12 +28,13 @@ export default function Settings({ onClose }) {
 
                 // 2. Verifica se já tem token salvo
                 if (username) {
-                    const resp = await api.post(`/LoadText/${username}`);
-                    console.log(resp)
+                    const resp = await api.get(`/LoadText/${username}`);
+                    console.log("LoadText response:", resp.data);
                     setTemToken(resp.data.temToken);
-                    setToken(resp.data.token)
-                    localStorage.setItem("token", resp.data.token);
-                    console.log("entrei")
+                    if (resp.data.token) {
+                        setToken(resp.data.token);
+                        localStorage.setItem("token", resp.data.token);
+                    }
                 }
 
             } catch (error) {
@@ -63,6 +64,7 @@ export default function Settings({ onClose }) {
             if (response.data.sucesso) {
                 setTemToken(true);
                 setToken("");
+                localStorage.removeItem("token");
                 setMensagem({
                     tipo: "sucesso",
                     texto: "✅ Token salvo com sucesso!"
@@ -81,7 +83,6 @@ export default function Settings({ onClose }) {
     return (
         <div className="settings-overlay" onClick={onClose}>
             <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-
                 <h1>Configurações</h1>
                 {carregando && !aluno ? (
                     <p className="carregando">Carregando dados...</p>
@@ -116,7 +117,7 @@ export default function Settings({ onClose }) {
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {"A"}Pegar minha key
+                            Pegar minha key
                         </a>
                     </p>
 
@@ -136,7 +137,6 @@ export default function Settings({ onClose }) {
                         />
 
                         <div className="botoes">
-
                             <button
                                 className="btn-salvar"
                                 onClick={salvarToken}

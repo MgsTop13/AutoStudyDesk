@@ -5,8 +5,6 @@ $bgAction: #1f8fe0;
 $text1: #ffffff;
 
 .captcha {
-
-
     position: absolute;
     left: 50%;
     top: 50%;
@@ -28,6 +26,73 @@ $text1: #ffffff;
 
         h2 {
             font-size: 1.2rem;
+        }
+
+        // Wrapper do input + botão recarregar
+        .captcha-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 80%;
+
+            input {
+                flex: 1;
+                height: 40px;
+                border: none;
+                border-radius: 8px;
+                background-color: $bg;
+                color: $text1;
+                padding: 0 12px;
+                font-size: 14px;
+
+                &::placeholder {
+                    color: rgba($text1, 0.5);
+                }
+
+                &:focus {
+                    outline: 2px solid $bgButton;
+                    outline-offset: 1px;
+                }
+
+                &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+            }
+
+            .btn-recarregar-captcha {
+                width: 44px;
+                height: 40px;
+                border: none;
+                border-radius: 8px;
+                background-color: $bgAction;
+                color: $text1;
+                font-size: 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: filter 0.15s ease, transform 0.1s ease;
+                flex-shrink: 0;
+
+                &:hover:not(:disabled) {
+                    filter: brightness(1.08);
+                }
+
+                &:active:not(:disabled) {
+                    transform: scale(0.98);
+                }
+
+                &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
+                &:focus {
+                    outline: 2px solid $bgButton;
+                    outline-offset: 1px;
+                }
+            }
         }
 
         input {
@@ -69,6 +134,11 @@ $text1: #ffffff;
 
             &:hover {
                 filter: brightness(1.08);
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                filter: brightness(0.9);
             }
         }
     }

@@ -1,5 +1,5 @@
 import { useNavigate, Link } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../../axios";
 import HeaderP from "../../components/header";
 import Settings from "../../components/Settings/settings.jsx";
@@ -9,6 +9,8 @@ import "./home.scss";
 export default function Home() {
     const [aluno, setAluno] = useState(null);
     const [tasks, setTasks] = useState(0);
+    const [tasksActive, setTasksActive] = useState(0);
+    const [tasksExpired, setTasksExpired] = useState(0);
     const [carregando, setCarregando] = useState(true);
     const [configAberto, setConfigAberto] = useState(false);
     const sessionId = localStorage.getItem("session");
@@ -44,9 +46,9 @@ export default function Home() {
     }
 
     // ==========================================
-    // CARREGA DADOS
+    // CARREGA DADOS - Ativas primeiro, depois expiradas
     // ==========================================
-    async function getActivy(force = false) {
+    const getActivy = useCallback(async (force = false) => {
         try {
             setCarregando(true);
 
@@ -56,6 +58,8 @@ export default function Home() {
                     console.log("💾 Home — cache local");
                     setAluno(cache.aluno);
                     setTasks(cache.tasks);
+                    setTasksActive(cache.tasksActive);
+                    setTasksExpired(cache.tasksExpired);
                     setCarregando(false);
                     return;
                 }
@@ -71,29 +75,50 @@ export default function Home() {
                 return navigate("/");
             }
 
+            // 1. Carrega tarefas ATIVAS primeiro (mais importantes)
             const tarefasResp = await api.get(`/tarefas/${sessionId}`);
-            const tarefasExpired = await api.get(`/tarefasExpiradas/${sessionId}`);
-            const totalAtiva = tarefasResp.data.tarefas.length;
-            const totalExpirada = tarefasExpired.data.tarefas.length;
-            const total = totalAtiva + totalExpirada;
+            const totalAtiva = tarefasResp.data.tarefas?.length || 0;
 
             setAluno(isOnline.data.aluno);
             localStorage.setItem("username", isOnline.data.aluno.nome);
-            setTasks(total);
+            setTasksActive(totalAtiva);
+            setTasks(totalAtiva); // Mostra ativas imediatamente
 
+            // Salva cache parcial com ativas
             salvarCache({
                 aluno: isOnline.data.aluno,
-                tasks: total,
+                tasks: totalAtiva,
                 tasksActive: totalAtiva,
-                tasksExpired: totalExpirada
+                tasksExpired: 0
             });
+
+            // 2. Carrega tarefas EXPIRADAS em background
+            try {
+                const tarefasExpired = await api.get(`/tarefasExpiradas/${sessionId}`);
+                const totalExpirada = tarefasExpired.data.tarefas?.length || 0;
+                const total = totalAtiva + totalExpirada;
+
+                setTasksExpired(totalExpirada);
+                setTasks(total);
+
+                // Atualiza cache com total completo
+                salvarCache({
+                    aluno: isOnline.data.aluno,
+                    tasks: total,
+                    tasksActive: totalAtiva,
+                    tasksExpired: totalExpirada
+                });
+            } catch (error) {
+                console.warn("Erro ao carregar tarefas expiradas:", error.message);
+                // Não falha a página se expiradas falhar
+            }
 
         } catch (error) {
             console.error(error.message);
         } finally {
             setCarregando(false);
         }
-    }
+    }, [sessionId]);
 
     // ==========================================
     // LOGOUT
@@ -115,7 +140,7 @@ export default function Home() {
 
     useEffect(() => {
         getActivy();
-    }, []);
+    }, [getActivy]);
 
     // ==========================================
     // RENDER
@@ -138,7 +163,7 @@ export default function Home() {
                 <div className="info">
                     <Link to="/Tasks" className="link">
                         <h3 onClick={() => getActivy(true)}>
-                            📚 Tarefas: {tasks}
+                            📚 Tarefas: {tasks} ({tasksActive} ativas, {tasksExpired} expiradas)
                         </h3>
                     </Link>
                     <Link to="/Home" className="link">

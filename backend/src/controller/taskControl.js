@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { Router } from "express";
 import sessaoManager from "../section.js";
 import { GoogleGenAI } from "@google/genai";
-import {InsertTask, ListTask} from "../repository/taskR.js";
+import { InsertTask, ListTask } from "../repository/taskR.js";
 import { limparQuestoesParaIA } from "../utils/cleanActivy.js";
 
 dotenv.config();
@@ -121,7 +121,10 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
       id: questoesLimpa.tarefaId
     });
 
-    if (ExistAnswer === "Não tem alguma resposta no banco") {
+    // Verifica se encontrou resposta no banco (novo formato retorna { sucesso: true, data: [...] })
+    const temRespostaSalva = ExistAnswer.sucesso && ExistAnswer.data && ExistAnswer.data.length > 0;
+
+    if (!temRespostaSalva) {
       const ai = new GoogleGenAI({ apiKey: token });
 
       const interaction = await ai.interactions.create({
@@ -147,10 +150,10 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
         preenchimento: resultados,
         respostasIA: respostas,
         existeAntes: false,
-        bancoSalvou: saveOnBank.affectedRows
+        bancoSalvou: saveOnBank.sucesso ? saveOnBank.data?.length || 0 : 0
       });
     } else {
-      const resultadosInWebsite = await navegador.preencherRespostas(ExistAnswer[0].questions);
+      const resultadosInWebsite = await navegador.preencherRespostas(ExistAnswer.data[0].questions);
       return res.json({
         sucesso: true,
         existeAntes: true,
@@ -160,9 +163,8 @@ endpoint.post("/tarefas/EnviarAtividade/Gemini", async (req, res) => {
 
   } catch (error) {
     console.error('Error:', error.message);
-    return res.status(500).send({ sucesso: false, error: error });
+    return res.status(500).send({ sucesso: false, error: error.message });
   }
 });
-
 
 export default endpoint;

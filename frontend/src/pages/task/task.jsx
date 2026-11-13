@@ -1,5 +1,5 @@
 import HeaderP from "../../components/header";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import "../../../scss/global.scss";
 import "./task.scss";
 import api from "../../axios";
@@ -12,6 +12,10 @@ export default function Tasks() {
     const [selectedTask, setSelectedTask] = useState(null);
     const [carregando, setCarregando] = useState(true);
     const sessionId = localStorage.getItem("session");
+
+    // Ref para evitar recarregar quando o modal abre/fecha
+    const isModalOpenRef = useRef(false);
+    const cacheLoadedRef = useRef(false);
 
     // ==========================================
     // CACHE LOCAL (Tasks)
@@ -45,7 +49,13 @@ export default function Tasks() {
     // ==========================================
     // CARREGA TAREFAS
     // ==========================================
-    async function loadTask(force = false) {
+    const loadTask = useCallback(async (force = false) => {
+        // Não recarrega se o modal está aberto (evita piscar/recarregar ao abrir/fechar atividade)
+        if (isModalOpenRef.current && !force) {
+            console.log("⏸️ Tasks — modal aberto, pulando recarga");
+            return;
+        }
+
         try {
             setCarregando(true);
 
@@ -55,6 +65,7 @@ export default function Tasks() {
                 if (cache) {
                     console.log("💾 Tasks — cache local");
                     setTasks(cache.data);
+                    cacheLoadedRef.current = true;
                     setCarregando(false);
                     return;
                 }
@@ -71,17 +82,18 @@ export default function Tasks() {
 
             // 3. Salva no cache
             salvarCache(response.data.tarefas);
+            cacheLoadedRef.current = true;
 
         } catch (error) {
             console.error(error);
         } finally {
             setCarregando(false);
         }
-    }
+    }, [sessionId]);
 
     useEffect(() => {
         loadTask();
-    }, []);
+    }, [loadTask]);
 
     // ==========================================
     // FILTRO (1 vez só)
@@ -96,13 +108,16 @@ export default function Tasks() {
     // MODAL
     // ==========================================
     function openModal(task) {
+        isModalOpenRef.current = true;
         setSelectedTask(task);
         setModal(true);
     }
 
     function closeModal() {
+        isModalOpenRef.current = false;
         setModal(false);
         setSelectedTask(null);
+        // NÃO chama loadTask() aqui - usa o cache
     }
 
     return (

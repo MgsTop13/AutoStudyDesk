@@ -5,6 +5,7 @@ REGRAS PARA DESENVOLVER ESSA BAGAÇA:
     4. Nao mude modulos inteiros quando uma correção localizada for suficiente.
     5. Mantenha a compatibilidade no frontend e backend.
     6. Priorize o codigo que um estudante/iniciante consiga compreender.
+    7. Não instale novas dependencias sem aviso e motivo
 
 Backend:
     Não é necessario mexer nos arquivos:

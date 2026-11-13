@@ -1,6 +1,6 @@
 import "./captcha.scss";
 import "../../../scss/global.scss";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import api from "../../axios";
 
 export default function Captcha({ task, onClose, sessionId }) {
@@ -10,32 +10,38 @@ export default function Captcha({ task, onClose, sessionId }) {
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState(false);
     const [resultados, setResultados] = useState(null);
+    const [recarregandoCaptcha, setRecarregandoCaptcha] = useState(false);
+
+    const carregarCaptcha = useCallback(async () => {
+        try {
+            setRecarregandoCaptcha(true);
+            setErro("");
+
+            const response = await api.post("/tarefas/abrir", {
+                sessionId,
+                tarefaId: task.id
+            });
+
+            const raw = response.data.captcha.imagem;
+            const src = raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
+            setImage(src);
+            setCaptchaT(""); // Limpa o input ao recarregar
+
+        } catch (error) {
+            console.error(error);
+            setErro("Não foi possível carregar o captcha");
+        } finally {
+            setCarregando(false);
+            setRecarregandoCaptcha(false);
+        }
+    }, [sessionId, task?.id]);
 
     useEffect(() => {
-        async function carregarCaptcha() {
-            try {
-                setCarregando(true);
-                setErro("");
-
-                const response = await api.post("/tarefas/abrir", {
-                    sessionId,
-                    tarefaId: task.id
-                });
-
-                const raw = response.data.captcha.imagem;
-                const src = raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
-                setImage(src);
-
-            } catch (error) {
-                console.error(error);
-                setErro("Não foi possível carregar o captcha");
-            } finally {
-                setCarregando(false);
-            }
+        if (task?.id && sessionId) {
+            setCarregando(true);
+            carregarCaptcha();
         }
-
-        if (task?.id && sessionId) carregarCaptcha();
-    }, [task?.id, sessionId]);
+    }, [task?.id, sessionId, carregarCaptcha]);
 
     async function enviarCaptcha() {
         if (!captchaT.trim()) return;
@@ -54,6 +60,7 @@ export default function Captcha({ task, onClose, sessionId }) {
 
             if (!responseCaptcha.data.sucesso) {
                 setErro(responseCaptcha.data.details || "Captcha incorreto");
+                // Não retorna aqui - deixa o usuário ver o erro e poder recarregar
                 return;
             }
 
@@ -66,9 +73,11 @@ export default function Captcha({ task, onClose, sessionId }) {
             console.log("📦 Resultado Gemini:", responseGemini.data);
 
             if (!responseGemini.data.sucesso) {
-                return "Seila";
+                setErro("Erro ao processar com IA");
+                return;
             }
 
+            setResultados(responseGemini.data.preenchimento || responseGemini.data.navegadorPreencheu || []);
             setSucesso(true);
 
             setTimeout(() => {
@@ -83,10 +92,8 @@ export default function Captcha({ task, onClose, sessionId }) {
         }
     }
 
-    async function enviarGemini(){
-        const tokenClean = localStorage.getItem("token");
-
-        if (!tokenClean || resultados) return;
+    async function recarregarCaptcha() {
+        await carregarCaptcha();
     }
 
     return (
@@ -100,12 +107,24 @@ export default function Captcha({ task, onClose, sessionId }) {
                     <>
                         <img src={image} alt="captcha" />
                         <h3>Por favor, resolva o captcha</h3>
-                        <input
-                            type="text"
-                            value={captchaT}
-                            onChange={(e) => setCaptchaT(e.target.value)}
-                        />
-                        <button onClick={enviarCaptcha}>
+                        <div className="captcha-input-wrapper">
+                            <input
+                                type="text"
+                                value={captchaT}
+                                onChange={(e) => setCaptchaT(e.target.value)}
+                                placeholder="Digite o captcha"
+                                disabled={recarregandoCaptcha}
+                            />
+                            <button
+                                className="btn-recarregar-captcha"
+                                onClick={recarregarCaptcha}
+                                disabled={recarregandoCaptcha}
+                                title="Recarregar captcha"
+                            >
+                                {recarregandoCaptcha ? "⏳" : "🔄"}
+                            </button>
+                        </div>
+                        <button onClick={enviarCaptcha} disabled={recarregandoCaptcha}>
                             Enviar
                         </button>
                     </>

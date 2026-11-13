@@ -7,8 +7,9 @@ import "../../../scss/global.scss"
 
 export default function Login() {
     const [ra, setRa] = useState("");
-    const [di, setDi] = useState();
+    const [di, setDi] = useState("");
     const [pass, setPass] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -48,9 +49,25 @@ export default function Login() {
                     <input className="digit" type="number" placeholder="digito" value={di} onChange={(e) => setDi(e.target.value)} />
                 </div>
 
-                <input className="text" type="password" placeholder="senha" value={pass} onChange={(e) => setPass(e.target.value)} />
+                <div className="password-wrapper">
+                    <input
+                        className="text"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="senha"
+                        value={pass}
+                        onChange={(e) => setPass(e.target.value)}
+                    />
+                    <button
+                        type="button"
+                        className="toggle-password"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    >
+                        {showPassword ? "🙈" : "👁️"}
+                    </button>
+                </div>
 
-            <button onClick={EnviarDados}>{isLoading ? "Calma" : "Pode Ir"}</button>
+            <button onClick={EnviarDados} disabled={isLoading}>{isLoading ? "Calma" : "Pode Ir"}</button>
             </div>
 
         </main>
