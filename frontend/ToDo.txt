@@ -1,0 +1,14 @@
+
+FrontEnd:
+    -Quando estiver entrando na home, pedir pro backend carregar as atividades ativadas e depois as atividades expiradas para não ter erro, e quando retornar os dados do backend, atividades devem ser salvas em cookies e logo em seguida, carregar a pagina home com os dados de usuario e atividade em formato de cookies para nao precisar carregar o servidor.
+    -Melhor gerenciamento nos cookies.
+    -Separar a estrura:
+        Tasks/
+    Cookies/ Backend/
+    
+    Ou os cookies podem puxar do backend tambem
+
+    FIX:
+    -Toda vez que entra e sai da pagina de atividade, ele devera consultar os cookies e não verificar a API, caso a atividade ja foi feita, devera ser removida do cookie.
+
+    -Quando o usuario esta entrando e saindo da tela de atividades, deveria carregar os cookies, so que o frontend esta puxando a api e salvado os dados novos com os antigos.

@@ -1,12 +1,13 @@
 import "./header.scss";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 export default function HeaderP({ onSettingsClick }) {
+    const atualPage = useLocation();
+    const isHome = atualPage.pathname === "/Home";
+    console.log(isHome)
     return (
         <header>
-            <Link to="/Home" className="link">← Voltar</Link>
-
-            {onSettingsClick && (
+            {isHome && onSettingsClick && (
                 <button
                     className="btn-settings"
                     onClick={onSettingsClick}
@@ -23,6 +24,10 @@ export default function HeaderP({ onSettingsClick }) {
                         }}
                     />
                 </button>
+            )}
+
+            {!isHome && (
+                <Link to="/Home" className="link">← Voltar</Link>
             )}
         </header>
     );

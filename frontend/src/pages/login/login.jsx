@@ -1,6 +1,6 @@
 import { useState } from "react"
 import api from "../../axios";
-import headerP from "../../components/header";
+import headerP from "../../components/header/header.jsx";
 import { useNavigate } from "react-router";
 import "./login.scss"
 import "../../../scss/global.scss"

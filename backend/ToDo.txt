@@ -4,6 +4,7 @@ BackEnd:
   details: null,
   hint: 'Grant the required privileges to the current role with: GRANT SELECT, INSERT ON public.tasks TO service_role;',
   message: 'permission denied for table tasks'
+    }
 
   Erro ao buscar task: {
   code: '42501',
@@ -19,8 +20,3 @@ Erro ao salvar token: {
   message: 'there is no unique or exclusion constraint matching the ON CONFLICT specification'
 }
     
-FrontEnd:
-    -Quando estiver entrando na home, pedir pro backend carregar as atividades ativadas e depois as expiradas para não ter erro, e quando retornar os dados de atividade em cookies e logo em seguida, carregar a home com os dados de usuario e atividade em cookies.
-    -Toda vez que entra e sai da pagina de atividade, ele esta consultando a api, mas deveria consultar os cookies
-    -Responsividade de botoes/componentes das paginas (login, home, captcha).
-    -Atividades ativas não estao sendo renderizadas.

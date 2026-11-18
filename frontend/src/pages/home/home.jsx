@@ -1,7 +1,7 @@
 import { useNavigate, Link } from "react-router";
 import { useEffect, useState, useCallback } from "react";
 import api from "../../axios";
-import HeaderP from "../../components/header";
+import HeaderP from "../../components/header/header.jsx";
 import Settings from "../../components/Settings/settings.jsx";
 import "../../../scss/global.scss"
 import "./home.scss";
@@ -20,7 +20,7 @@ export default function Home() {
     // CACHE LOCAL
     // ==========================================
     const CACHE_KEY = "home_cache";
-    const CACHE_TTL = 1000 * 60 * 5; // 5 min
+    const CACHE_TTL = 1000 * 60 * 10;
 
     function lerCache() {
         try {
@@ -54,7 +54,7 @@ export default function Home() {
 
             if (!force) {
                 const cache = lerCache();
-                if (cache) {
+                if (cache && cache.complete) {
                     console.log("💾 Home — cache local");
                     setAluno(cache.aluno);
                     setTasks(cache.tasks);
@@ -89,7 +89,8 @@ export default function Home() {
                 aluno: isOnline.data.aluno,
                 tasks: totalAtiva,
                 tasksActive: totalAtiva,
-                tasksExpired: 0
+                tasksExpired: 0,
+                complete: false
             });
 
             // 2. Carrega tarefas EXPIRADAS em background
@@ -106,7 +107,8 @@ export default function Home() {
                     aluno: isOnline.data.aluno,
                     tasks: total,
                     tasksActive: totalAtiva,
-                    tasksExpired: totalExpirada
+                    tasksExpired: totalExpirada,
+                    complete: true
                 });
             } catch (error) {
                 console.warn("Erro ao carregar tarefas expiradas:", error.message);

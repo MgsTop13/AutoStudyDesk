@@ -92,14 +92,15 @@
 
             input {
                 width: 100%;
-                padding-right: 3rem; // Espaço para o botão
+                padding-right: 3rem; //Espaço para o botão
             }
 
             .toggle-password {
+                width: 20%;
                 position: absolute;
                 right: 0.75rem;
                 top: 50%;
-                transform: translateY(-50%);
+                transform: translate(10%, -50%);
                 background: none;
                 border: none;
                 cursor: pointer;

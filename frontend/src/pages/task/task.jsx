@@ -1,4 +1,5 @@
-import HeaderP from "../../components/header";
+import HeaderP from "../../components/header/header.jsx";
+
 import { useEffect, useState, useCallback, useRef } from "react";
 import "../../../scss/global.scss";
 import "./task.scss";
@@ -62,7 +63,7 @@ export default function Tasks() {
             // 1. Tenta cache local
             if (!force) {
                 const cache = lerCache();
-                if (cache) {
+                if (cache && cache.complete) {
                     console.log("💾 Tasks — cache local");
                     setTasks(cache.data);
                     cacheLoadedRef.current = true;
@@ -122,7 +123,7 @@ export default function Tasks() {
 
     return (
         <main className="main-tasks">
-            <HeaderP />
+            <HeaderP onSettingsClick={() => setConfigAberto(false)} />
 
             <div className="filtro">
                 <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>
